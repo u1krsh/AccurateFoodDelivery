@@ -14,6 +14,7 @@ from models.driver import Driver
 from models.graph import Graph
 from algorithms.routing import Routing
 from utils.image_map_creator import create_image_map
+from utils.cuisine_time_calculator import CuisineTimeCalculator
 
 class DeliveryTrackerGUI:
     def __init__(self, root):
@@ -26,6 +27,7 @@ class DeliveryTrackerGUI:
         self.drivers = {}
         self.deliveries = {}
         self.routing = Routing(self.graph)
+        self.cuisine_calculator = CuisineTimeCalculator()
         
         # Coordinate system variables
         self.show_coordinates = tk.BooleanVar(value=True)
@@ -208,47 +210,190 @@ class DeliveryTrackerGUI:
                   command=self.update_delivery_progress).pack(side=tk.LEFT, padx=5)
         
     def create_routing_tab(self):
-        # Routing Tab
+        # Routing Tab with integrated cuisine features
         self.routing_frame = ttk.Frame(self.notebook)
-        self.notebook.add(self.routing_frame, text="Route Planning")
+        self.notebook.add(self.routing_frame, text="Smart Route Planning")
         
-        # Route planning controls
-        planning_frame = ttk.LabelFrame(self.routing_frame, text="Route Planning")
-        planning_frame.pack(fill=tk.X, padx=10, pady=5)
+        # Create main container with two columns
+        main_container = ttk.Frame(self.routing_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        # Source and destination selection
-        ttk.Label(planning_frame, text="Start Location:").grid(row=0, column=0, padx=5, pady=5)
+        # Left column for route and cuisine settings
+        left_frame = ttk.Frame(main_container)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        
+        # Right column for results and dish info
+        right_frame = ttk.Frame(main_container)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        # === LEFT COLUMN: ROUTE & CUISINE SETTINGS ===
+        
+        # Route Configuration Section
+        route_config_frame = ttk.LabelFrame(left_frame, text="🗺️ Route Configuration")
+        route_config_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        # Location selection with enhanced layout
+        locations_frame = ttk.Frame(route_config_frame)
+        locations_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        ttk.Label(locations_frame, text="From:", font=('Arial', 9, 'bold')).grid(row=0, column=0, sticky='w', padx=5, pady=2)
         self.start_var = tk.StringVar()
-        self.start_combo = ttk.Combobox(planning_frame, textvariable=self.start_var, width=20)
-        self.start_combo.grid(row=0, column=1, padx=5, pady=5)
+        self.start_combo = ttk.Combobox(locations_frame, textvariable=self.start_var, width=25)
+        self.start_combo.grid(row=0, column=1, padx=5, pady=2, sticky='ew')
         
-        ttk.Label(planning_frame, text="End Location:").grid(row=0, column=2, padx=5, pady=5)
+        ttk.Label(locations_frame, text="To:", font=('Arial', 9, 'bold')).grid(row=1, column=0, sticky='w', padx=5, pady=2)
         self.end_var = tk.StringVar()
-        self.end_combo = ttk.Combobox(planning_frame, textvariable=self.end_var, width=20)
-        self.end_combo.grid(row=0, column=3, padx=5, pady=5)
+        self.end_combo = ttk.Combobox(locations_frame, textvariable=self.end_var, width=25)
+        self.end_combo.grid(row=1, column=1, padx=5, pady=2, sticky='ew')
+        
+        locations_frame.columnconfigure(1, weight=1)
         
         # Algorithm selection
-        ttk.Label(planning_frame, text="Algorithm:").grid(row=1, column=0, padx=5, pady=5)
-        self.algorithm_var = tk.StringVar(value="BFS")
-        algorithm_combo = ttk.Combobox(planning_frame, textvariable=self.algorithm_var, 
-                                     values=["BFS", "DFS", "Shortest Path"], width=15)
-        algorithm_combo.grid(row=1, column=1, padx=5, pady=5)
+        algorithm_frame = ttk.Frame(route_config_frame)
+        algorithm_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         
-        ttk.Button(planning_frame, text="Find Route", 
-                  command=self.find_route).grid(row=1, column=2, padx=5, pady=5)
-        ttk.Button(planning_frame, text="Optimize All Routes", 
-                  command=self.optimize_routes).grid(row=1, column=3, padx=5, pady=5)
+        ttk.Label(algorithm_frame, text="Algorithm:", font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
+        self.algorithm_var = tk.StringVar(value="Shortest Path")
+        algorithm_combo = ttk.Combobox(algorithm_frame, textvariable=self.algorithm_var, 
+                                     values=["BFS", "DFS", "Shortest Path"], width=15, state="readonly")
+        algorithm_combo.pack(side=tk.LEFT, padx=5)
         
-        # Route results
-        results_frame = ttk.LabelFrame(self.routing_frame, text="Route Results")
-        results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        # Basic route buttons
+        basic_buttons_frame = ttk.Frame(route_config_frame)
+        basic_buttons_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         
-        self.route_text = tk.Text(results_frame, height=20, wrap=tk.WORD)
+        ttk.Button(basic_buttons_frame, text="🔍 Find Basic Route", 
+                  command=self.find_route).pack(side=tk.LEFT, padx=5)
+        ttk.Button(basic_buttons_frame, text="⚡ Optimize All", 
+                  command=self.optimize_routes).pack(side=tk.LEFT, padx=5)
+        
+        # === CUISINE INTEGRATION SECTION ===
+        cuisine_frame = ttk.LabelFrame(left_frame, text="🍽️ Smart Delivery Planning")
+        cuisine_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        # Cuisine search with improved layout
+        search_frame = ttk.Frame(cuisine_frame)
+        search_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        ttk.Label(search_frame, text="Find Dish:", font=('Arial', 9, 'bold')).pack(anchor='w')
+        
+        search_entry_frame = ttk.Frame(search_frame)
+        search_entry_frame.pack(fill=tk.X, pady=(5, 0))
+        
+        self.dish_search_var = tk.StringVar()
+        self.dish_search_entry = ttk.Entry(search_entry_frame, textvariable=self.dish_search_var, 
+                                          font=('Arial', 9), width=30)
+        self.dish_search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.dish_search_entry.bind('<KeyRelease>', lambda event: self.search_dishes_simple())
+        
+        ttk.Button(search_entry_frame, text="🔎", width=3,
+                  command=lambda: self.search_dishes_simple()).pack(side=tk.RIGHT)
+        
+        # Quick cuisine filters
+        cuisine_filter_frame = ttk.Frame(search_frame)
+        cuisine_filter_frame.pack(fill=tk.X, pady=(5, 0))
+        
+        ttk.Label(cuisine_filter_frame, text="Quick Filters:", font=('Arial', 8)).pack(anchor='w')
+        filter_buttons_frame = ttk.Frame(cuisine_filter_frame)
+        filter_buttons_frame.pack(fill=tk.X, pady=(2, 0))
+        
+        cuisines = ["Italian", "Asian", "American", "Mexican", "Dessert"]
+        for cuisine in cuisines:
+            ttk.Button(filter_buttons_frame, text=cuisine, width=8,
+                      command=lambda c=cuisine: self.filter_by_cuisine(c)).pack(side=tk.LEFT, padx=2)
+        
+        # Dish selection
+        selection_frame = ttk.Frame(cuisine_frame)
+        selection_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+        
+        ttk.Label(selection_frame, text="Selected Dish:", font=('Arial', 9, 'bold')).pack(anchor='w')
+        
+        dish_combo_frame = ttk.Frame(selection_frame)
+        dish_combo_frame.pack(fill=tk.X, pady=(5, 10))
+        
+        self.selected_dish_var = tk.StringVar()
+        self.dish_combo = ttk.Combobox(dish_combo_frame, textvariable=self.selected_dish_var, 
+                                      font=('Arial', 9), width=30, state="readonly")
+        self.dish_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.dish_combo.bind('<<ComboboxSelected>>', self.on_dish_selected_simple)
+        
+        # Populate dish combo with all dishes initially
+        try:
+            all_dishes = self.cuisine_calculator.get_all_dishes()
+            self.dish_combo['values'] = all_dishes
+        except Exception as e:
+            print(f"Error loading dishes: {e}")
+            self.dish_combo['values'] = ["Loading dishes..."]
+        
+        # Smart calculation button
+        smart_calc_frame = ttk.Frame(cuisine_frame)
+        smart_calc_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+        
+        self.smart_calc_btn = ttk.Button(smart_calc_frame, text="🧠 Calculate Smart Delivery Time", 
+                                        command=lambda: self.calculate_delivery_time_simple())
+        self.smart_calc_btn.pack(fill=tk.X)
+        
+        # === RIGHT COLUMN: RESULTS & INFO ===
+        
+        # Dish Information Panel
+        dish_info_frame = ttk.LabelFrame(right_frame, text="📋 Dish Information")
+        dish_info_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        self.dish_info_text = tk.Text(dish_info_frame, height=8, wrap=tk.WORD, font=('Arial', 9))
+        dish_info_scrollbar = ttk.Scrollbar(dish_info_frame, orient=tk.VERTICAL, command=self.dish_info_text.yview)
+        self.dish_info_text.configure(yscrollcommand=dish_info_scrollbar.set)
+        
+        self.dish_info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        dish_info_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        
+        # Initial dish info message
+        self.dish_info_text.insert(tk.END, "🍽️ SMART DELIVERY PLANNING\n\n" +
+                                           "• Search for dishes by name or cuisine\n" +
+                                           "• Select a dish to see preparation details\n" +
+                                           "• Get delivery time estimates that include:\n" +
+                                           "  - Food preparation time\n" +
+                                           "  - Route optimization\n" +
+                                           "  - Cuisine-specific delivery factors\n\n" +
+                                           "💡 Tip: Use quick filters or type to search!")
+        self.dish_info_text.config(state=tk.DISABLED)
+        dish_info_scrollbar = ttk.Scrollbar(dish_info_frame, orient=tk.VERTICAL, command=self.dish_info_text.yview)
+        self.dish_info_text.configure(yscrollcommand=dish_info_scrollbar.set)
+        
+        self.dish_info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        dish_info_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        
+        # Route Results and Analysis
+        results_frame = ttk.LabelFrame(right_frame, text="📊 Route Analysis & Results")
+        results_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.route_text = tk.Text(results_frame, height=15, wrap=tk.WORD, font=('Consolas', 9))
         route_scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.route_text.yview)
         self.route_text.configure(yscrollcommand=route_scrollbar.set)
         
         self.route_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        route_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        route_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        
+        # Initial welcome message in route results
+        welcome_msg = """🚀 SMART ROUTE PLANNING SYSTEM
+        
+Ready to calculate optimized delivery routes!
+
+FEATURES:
+✓ Multiple pathfinding algorithms (BFS, DFS, Shortest Path)
+✓ Cuisine-aware delivery time estimation
+✓ Real-time dish search and filtering
+✓ Detailed route analysis with preparation times
+
+INSTRUCTIONS:
+1. Select start and end locations
+2. Choose a dish for delivery
+3. Click 'Calculate Smart Delivery Time' for full analysis
+   OR use 'Find Basic Route' for simple pathfinding
+
+Results will appear here with detailed breakdowns!
+"""
+        self.route_text.insert(tk.END, welcome_msg)
+        self.route_text.config(state=tk.DISABLED)
         
     def create_tracking_tab(self):
         # Real-time Tracking Tab
@@ -675,14 +820,21 @@ class DeliveryTrackerGUI:
             
             if path:
                 total_time = self.routing.calculate_route_time(path)
-                result = f"\n{algorithm} Route from {start} to {end}:\n"
-                result += f"Path: {' -> '.join(path)}\n"
-                result += f"Total Time: {total_time} minutes\n"
-                result += f"Number of intersections: {len(path)}\n"
-                result += "-" * 50 + "\n"
+                result = f"\n🗺️ BASIC {algorithm.upper()} ROUTE CALCULATION\n"
+                result += f"{'='*60}\n\n"
+                result += f"Route: {start} → {end}\n"
+                result += f"Algorithm: {algorithm}\n"
+                result += f"Path: {' → '.join(path)}\n"
+                result += f"Segments: {len(path)-1}\n"
+                result += f"Travel Time: {total_time} minutes\n\n"
+                result += f"💡 For cuisine-aware delivery estimates, select a dish\n"
+                result += f"   and use 'Calculate Smart Delivery Time'\n"
+                result += f"{'='*60}\n"
                 
+                self.route_text.config(state=tk.NORMAL)
                 self.route_text.insert(tk.END, result)
                 self.route_text.see(tk.END)
+                self.route_text.config(state=tk.DISABLED)
                 self.log_update(f"Found {algorithm} route from {start} to {end}")
             else:
                 messagebox.showwarning("Warning", f"No route found from {start} to {end}")
@@ -800,6 +952,259 @@ class DeliveryTrackerGUI:
                 f"{delivery.progress}%", assigned_driver,
                 datetime.now().strftime("%H:%M")
             ))
+    
+    # Cuisine Time Adjustment Methods
+    def search_dishes_simple(self):
+        """Search for dishes based on search query"""
+        query = self.dish_search_var.get()
+        if not query:
+            # If no query, show all dishes
+            try:
+                all_dishes = self.cuisine_calculator.get_all_dishes()
+                self.dish_combo['values'] = all_dishes
+                self.dish_info_text.config(state=tk.NORMAL)
+                self.dish_info_text.delete(1.0, tk.END)
+                self.dish_info_text.insert(tk.END, f"📋 ALL AVAILABLE DISHES\n\n" +
+                                                  f"Loaded {len(all_dishes)} dishes from database.\n" +
+                                                  f"Use the dropdown below to select any dish for detailed information.\n\n" +
+                                                  f"💡 Tip: You can also use the search box or quick filter buttons!")
+                self.dish_info_text.config(state=tk.DISABLED)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load dishes: {e}")
+            return
+        
+        try:
+            matching_dishes = self.cuisine_calculator.search_dishes(query)
+            
+            if not matching_dishes:
+                self.dish_info_text.config(state=tk.NORMAL)
+                self.dish_info_text.delete(1.0, tk.END)
+                self.dish_info_text.insert(tk.END, f"❌ NO RESULTS\n\nNo dishes found matching '{query}'\n\n" +
+                                                  f"Try searching for:\n• Dish names (e.g., 'pizza', 'burger')\n" +
+                                                  f"• Cuisines (e.g., 'italian', 'asian')\n" +
+                                                  f"• Categories (e.g., 'dessert', 'appetizer')")
+                self.dish_info_text.config(state=tk.DISABLED)
+                self.dish_combo['values'] = []
+                return
+            
+            # Update dropdown with search results
+            dish_names = [dish['dish'] for dish in matching_dishes]
+            self.dish_combo['values'] = dish_names
+            
+            # Display search results
+            self.dish_info_text.config(state=tk.NORMAL)
+            self.dish_info_text.delete(1.0, tk.END)
+            search_info = f"🔍 SEARCH RESULTS: '{query}'\n\n"
+            search_info += f"Found {len(matching_dishes)} matching dishes:\n\n"
+            
+            for dish in matching_dishes[:10]:  # Show first 10 results
+                search_info += f"• {dish['dish']} ({dish['cuisine']})\n"
+                search_info += f"  Prep: {dish['base_prep_time']}min, Multiplier: {dish['time_multiplier']:.2f}x\n\n"
+            
+            if len(matching_dishes) > 10:
+                search_info += f"... and {len(matching_dishes) - 10} more dishes.\n"
+            
+            search_info += "\nSelect any dish from the dropdown for detailed information!"
+            
+            self.dish_info_text.insert(tk.END, search_info)
+            self.dish_info_text.config(state=tk.DISABLED)
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Search failed: {e}")
+    
+    def calculate_delivery_time_simple(self):
+        """Calculate total delivery time including cuisine adjustments"""
+        start = self.start_var.get()
+        end = self.end_var.get()
+        selected_dish = self.selected_dish_var.get()
+        
+        if not start or not end:
+            messagebox.showwarning("Warning", "Please select start and end locations")
+            return
+        
+        if not selected_dish:
+            messagebox.showwarning("Warning", "Please select a dish")
+            return
+        
+        if start not in self.graph.nodes or end not in self.graph.nodes:
+            messagebox.showerror("Error", "Invalid start or end location")
+            return
+        
+        try:
+            # Find the shortest path for travel time calculation
+            path = self.routing.shortest_path(start, end)
+            
+            if not path:
+                messagebox.showwarning("Warning", f"No route found from {start} to {end}")
+                return
+            
+            # Calculate base travel time
+            base_travel_time = self.routing.calculate_route_time(path)
+            
+            # Calculate adjusted delivery time using cuisine calculator
+            total_time, details = self.cuisine_calculator.calculate_adjusted_delivery_time(
+                base_travel_time, selected_dish
+            )
+            
+            # Create detailed results display
+            result = f"\n{'='*60}\n"
+            result += f"DELIVERY TIME CALCULATION\n"
+            result += f"{'='*60}\n\n"
+            
+            result += f"Route: {start} → {end}\n"
+            result += f"Path: {' → '.join(path)}\n"
+            result += f"Distance: {len(path)-1} segments\n\n"
+            
+            result += f"DISH INFORMATION:\n"
+            result += f"Dish: {details['dish']}\n"
+            if details['found']:
+                result += f"Cuisine: {details['cuisine']}\n"
+                result += f"Category: {details['category']}\n\n"
+                
+                result += f"TIME BREAKDOWN:\n"
+                result += f"Base Travel Time: {details['base_travel_time']:.1f} minutes\n"
+                result += f"Preparation Time: {details['prep_time']:.1f} minutes\n"
+                result += f"Time Multiplier: {details['time_multiplier']:.2f}x\n"
+                result += f"Adjusted Travel Time: {details['adjusted_travel_time']:.1f} minutes\n"
+                result += f"TOTAL DELIVERY TIME: {details['total_time']:.1f} minutes\n\n"
+            else:
+                result += f"Cuisine: Unknown (dish not found in database)\n"
+                result += f"Using default calculation\n\n"
+                result += f"TOTAL DELIVERY TIME: {total_time:.1f} minutes\n\n"
+            
+            result += f"{'='*60}\n"
+            
+            # Display in route results
+            self.route_text.config(state=tk.NORMAL)
+            self.route_text.insert(tk.END, result)
+            self.route_text.see(tk.END)
+            self.route_text.config(state=tk.DISABLED)
+            
+            # Also update dish info display with calculation results
+            self.dish_info_text.config(state=tk.NORMAL)
+            self.dish_info_text.delete(1.0, tk.END)
+            
+            summary = f"✅ CALCULATION COMPLETE!\n\n"
+            summary += f"🗺️ Route: {start} → {end}\n"
+            summary += f"🍽️ Dish: {selected_dish}\n"
+            summary += f"⏱️ Total Time: {total_time:.1f} minutes\n\n"
+            
+            if details['found']:
+                summary += f"📊 Time Breakdown:\n"
+                summary += f"  • Preparation: {details['prep_time']:.1f} min\n"
+                summary += f"  • Base Travel: {details['base_travel_time']:.1f} min\n"
+                summary += f"  • Adjusted Travel: {details['adjusted_travel_time']:.1f} min\n"
+                summary += f"  • Cuisine Multiplier: {details['time_multiplier']:.2f}x\n\n"
+                
+                time_saved = details['base_travel_time'] - details['adjusted_travel_time']
+                if time_saved > 0:
+                    summary += f"💡 Time Optimized: {time_saved:.1f} min saved!\n"
+                elif time_saved < -1:
+                    summary += f"⚠️ Complex Delivery: {abs(time_saved):.1f} min extra needed\n"
+                
+            summary += f"\n📋 Check 'Route Analysis & Results' for full details!"
+            
+            self.dish_info_text.insert(tk.END, summary)
+            self.dish_info_text.config(state=tk.DISABLED)
+            
+            self.log_update(f"Calculated delivery time for {selected_dish}: {total_time:.1f} minutes")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Delivery time calculation failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+    
+    def filter_by_cuisine(self, cuisine_type):
+        """Filter dishes by cuisine type using quick filter buttons"""
+        try:
+            if cuisine_type == "Dessert":
+                # Filter by category for desserts
+                matching_dishes = [dish for dish in self.cuisine_calculator.search_dishes("dessert") 
+                                 if "dessert" in dish.get('category', '').lower()]
+            else:
+                # Filter by cuisine
+                dishes = self.cuisine_calculator.get_dishes_by_cuisine(cuisine_type)
+                matching_dishes = [{'dish': dish} for dish in dishes]
+            
+            if matching_dishes:
+                dish_names = [dish['dish'] for dish in matching_dishes]
+                self.dish_combo['values'] = dish_names
+                
+                # Update search field and info
+                self.dish_search_var.set(cuisine_type)
+                self.dish_info_text.config(state=tk.NORMAL)
+                self.dish_info_text.delete(1.0, tk.END)
+                
+                info_text = f"🔎 FILTERED BY: {cuisine_type.upper()}\n\n"
+                info_text += f"Found {len(matching_dishes)} dishes:\n\n"
+                
+                for dish in matching_dishes[:8]:  # Show first 8
+                    dish_info = self.cuisine_calculator.get_dish_info(dish['dish'])
+                    if dish_info:
+                        info_text += f"• {dish_info['dish']}\n"
+                        info_text += f"  Prep: {dish_info['base_prep_time']}min, "
+                        info_text += f"Multiplier: {dish_info['time_multiplier']:.2f}x\n\n"
+                
+                if len(matching_dishes) > 8:
+                    info_text += f"... and {len(matching_dishes) - 8} more dishes.\n"
+                
+                info_text += "\nSelect a dish from the dropdown to see full details!"
+                
+                self.dish_info_text.insert(tk.END, info_text)
+                self.dish_info_text.config(state=tk.DISABLED)
+            else:
+                self.dish_combo['values'] = []
+                self.dish_info_text.config(state=tk.NORMAL)
+                self.dish_info_text.delete(1.0, tk.END)
+                self.dish_info_text.insert(tk.END, f"No dishes found for {cuisine_type}")
+                self.dish_info_text.config(state=tk.DISABLED)
+                
+        except Exception as e:
+            messagebox.showerror("Filter Error", f"Failed to filter by {cuisine_type}: {e}")
+    
+    def on_dish_selected_simple(self, event=None):
+        """Handle dish selection from dropdown"""
+        selected_dish = self.selected_dish_var.get()
+        if not selected_dish:
+            return
+        
+        try:
+            dish_info = self.cuisine_calculator.get_dish_info(selected_dish)
+            
+            self.dish_info_text.config(state=tk.NORMAL)
+            self.dish_info_text.delete(1.0, tk.END)
+            
+            if dish_info:
+                info_text = f"🍽️ SELECTED: {dish_info['dish']}\n\n"
+                info_text += f"📍 Details:\n"
+                info_text += f"  • Cuisine: {dish_info['cuisine']}\n"
+                info_text += f"  • Category: {dish_info['category']}\n"
+                info_text += f"  • Prep Time: {dish_info['base_prep_time']} minutes\n"
+                info_text += f"  • Time Multiplier: {dish_info['time_multiplier']:.2f}x\n\n"
+                info_text += f"🔍 Multiplier Analysis:\n"
+                if dish_info['time_multiplier'] > 1.2:
+                    info_text += f"  High complexity delivery (>{dish_info['time_multiplier']:.2f}x)\n"
+                elif dish_info['time_multiplier'] < 0.9:
+                    info_text += f"  Fast delivery item (<{dish_info['time_multiplier']:.2f}x)\n"
+                else:
+                    info_text += f"  Standard delivery time (~{dish_info['time_multiplier']:.2f}x)\n"
+                info_text += f"  • Considers packaging requirements\n"
+                info_text += f"  • Temperature sensitivity factors\n"
+                info_text += f"  • Historical delivery patterns\n\n"
+                info_text += f"✅ Ready for smart route calculation!\n"
+                info_text += f"Select locations and click 'Calculate Smart Delivery Time'"
+                
+                self.dish_info_text.insert(tk.END, info_text)
+            else:
+                self.dish_info_text.insert(tk.END, f"❌ ERROR\n\nNo information found for dish: {selected_dish}")
+            
+            self.dish_info_text.config(state=tk.DISABLED)
+        
+        except Exception as e:
+            self.dish_info_text.config(state=tk.NORMAL)
+            self.dish_info_text.delete(1.0, tk.END)
+            self.dish_info_text.insert(tk.END, f"❌ ERROR\n\nFailed to load dish information: {e}")
+            self.dish_info_text.config(state=tk.DISABLED)
     
     def update_statistics(self):
         total_drivers = len(self.drivers)
@@ -1095,6 +1500,171 @@ class RoadDialog:
         if start and end and start != end:
             self.result = (start, end, weight)
             self.dialog.destroy()
+    
+    # Cuisine Time Adjustment Methods
+    def on_dish_search(self, event=None):
+        """Handle real-time search as user types"""
+        query = self.dish_search_var.get()
+        if len(query) >= 2:  # Start searching after 2 characters
+            matching_dishes = self.cuisine_calculator.search_dishes(query)
+            dish_names = [dish['dish'] for dish in matching_dishes[:20]]  # Limit to 20 results
+            self.dish_combo['values'] = dish_names
+            if dish_names:
+                self.dish_combo.set('')  # Clear selection to show search results
+    
+    def search_dishes(self):
+        """Search for dishes based on search query"""
+        query = self.dish_search_var.get()
+        if not query:
+            # If no query, show all dishes
+            all_dishes = self.cuisine_calculator.get_all_dishes()
+            self.dish_combo['values'] = all_dishes
+            self.dish_info_text.delete(1.0, tk.END)
+            self.dish_info_text.insert(tk.END, f"Showing all {len(all_dishes)} available dishes.\nSelect a dish from the dropdown to see details.")
+            return
+        
+        matching_dishes = self.cuisine_calculator.search_dishes(query)
+        
+        if not matching_dishes:
+            self.dish_info_text.delete(1.0, tk.END)
+            self.dish_info_text.insert(tk.END, f"No dishes found matching '{query}'")
+            self.dish_combo['values'] = []
+            return
+        
+        # Update dropdown with search results
+        dish_names = [dish['dish'] for dish in matching_dishes]
+        self.dish_combo['values'] = dish_names
+        
+        # Display search results
+        self.dish_info_text.delete(1.0, tk.END)
+        search_info = f"Found {len(matching_dishes)} dishes matching '{query}':\n\n"
+        
+        for dish in matching_dishes[:10]:  # Show first 10 results
+            search_info += f"• {dish['dish']} ({dish['cuisine']})\n"
+            search_info += f"  Prep Time: {dish['base_prep_time']} min, Multiplier: {dish['time_multiplier']:.2f}\n\n"
+        
+        if len(matching_dishes) > 10:
+            search_info += f"... and {len(matching_dishes) - 10} more dishes.\n"
+        
+        self.dish_info_text.insert(tk.END, search_info)
+    
+    def on_dish_selected(self, event=None):
+        """Handle dish selection from dropdown"""
+        selected_dish = self.selected_dish_var.get()
+        if not selected_dish:
+            return
+        
+        dish_info = self.cuisine_calculator.get_dish_info(selected_dish)
+        
+        if dish_info:
+            info_text = f"Selected Dish: {dish_info['dish']}\n\n"
+            info_text += f"Cuisine: {dish_info['cuisine']}\n"
+            info_text += f"Category: {dish_info['category']}\n"
+            info_text += f"Base Preparation Time: {dish_info['base_prep_time']} minutes\n"
+            info_text += f"Time Multiplier: {dish_info['time_multiplier']:.2f}\n\n"
+            info_text += "This multiplier adjusts travel time based on:\n"
+            info_text += "• Dish complexity and packaging requirements\n"
+            info_text += "• Temperature sensitivity\n"
+            info_text += "• Traffic patterns for this cuisine type\n"
+            info_text += "• Historical delivery data\n\n"
+            info_text += "Select start/end locations and click 'Calculate Time' for delivery estimate."
+            
+            self.dish_info_text.delete(1.0, tk.END)
+            self.dish_info_text.insert(tk.END, info_text)
+    
+    def calculate_delivery_time(self):
+        """Calculate total delivery time including cuisine adjustments"""
+        start = self.start_var.get()
+        end = self.end_var.get()
+        selected_dish = self.selected_dish_var.get()
+        
+        if not start or not end:
+            messagebox.showwarning("Warning", "Please select start and end locations")
+            return
+        
+        if not selected_dish:
+            messagebox.showwarning("Warning", "Please select a dish")
+            return
+        
+        if start not in self.graph.nodes or end not in self.graph.nodes:
+            messagebox.showerror("Error", "Invalid start or end location")
+            return
+        
+        try:
+            # Find the shortest path for travel time calculation
+            path = self.routing.shortest_path(start, end)
+            
+            if not path:
+                messagebox.showwarning("Warning", f"No route found from {start} to {end}")
+                return
+            
+            # Calculate base travel time
+            base_travel_time = self.routing.calculate_route_time(path)
+            
+            # Get detailed route weights for breakdown
+            route_weights = []
+            for i in range(len(path) - 1):
+                current = path[i]
+                next_node = path[i + 1]
+                weight = self.graph.get_edge_weight(current, next_node)
+                if weight is not None:
+                    route_weights.append(weight)
+            
+            # Calculate adjusted delivery time
+            total_time, details = self.cuisine_calculator.calculate_adjusted_delivery_time(
+                base_travel_time, selected_dish
+            )
+            
+            # Create detailed results display
+            result = f"\n{'='*60}\n"
+            result += f"DELIVERY TIME CALCULATION\n"
+            result += f"{'='*60}\n\n"
+            
+            result += f"Route: {start} → {end}\n"
+            result += f"Path: {' → '.join(path)}\n"
+            result += f"Distance: {len(path)-1} segments\n\n"
+            
+            result += f"DISH INFORMATION:\n"
+            result += f"Dish: {details['dish']}\n"
+            result += f"Cuisine: {details['cuisine']}\n"
+            result += f"Category: {details['category']}\n\n"
+            
+            result += f"TIME BREAKDOWN:\n"
+            result += f"Base Travel Time: {details['base_travel_time']:.1f} minutes\n"
+            result += f"Preparation Time: {details['prep_time']:.1f} minutes\n"
+            result += f"Time Multiplier: {details['time_multiplier']:.2f}x\n"
+            result += f"Adjusted Travel Time: {details['adjusted_travel_time']:.1f} minutes\n"
+            result += f"TOTAL DELIVERY TIME: {details['total_time']:.1f} minutes\n\n"
+            
+            result += f"ROUTE SEGMENTS:\n"
+            for i, weight in enumerate(route_weights):
+                result += f"  {path[i]} → {path[i+1]}: {weight} min\n"
+            
+            result += f"\n{'='*60}\n"
+            
+            # Display in route results
+            self.route_text.insert(tk.END, result)
+            self.route_text.see(tk.END)
+            
+            # Also update dish info display with calculation results
+            summary = f"DELIVERY TIME CALCULATED!\n\n"
+            summary += f"Route: {start} → {end}\n"
+            summary += f"Dish: {selected_dish}\n"
+            summary += f"Total Time: {total_time:.1f} minutes\n\n"
+            summary += f"Breakdown:\n"
+            summary += f"• Preparation: {details['prep_time']:.1f} min\n"
+            summary += f"• Travel (base): {details['base_travel_time']:.1f} min\n"
+            summary += f"• Travel (adjusted): {details['adjusted_travel_time']:.1f} min\n"
+            summary += f"• Time multiplier: {details['time_multiplier']:.2f}x\n\n"
+            summary += "Full details added to Route Results above."
+            
+            self.dish_info_text.delete(1.0, tk.END)
+            self.dish_info_text.insert(tk.END, summary)
+            
+            self.log_update(f"Calculated delivery time for {selected_dish}: {total_time:.1f} minutes")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Delivery time calculation failed: {str(e)}")
 
 
 def main():

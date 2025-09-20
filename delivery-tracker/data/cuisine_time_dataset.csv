@@ -1,301 +1,301 @@
 Dish,Cuisine,BasePrepTime,TimeMultiplier,Category
-Milkshake Classic,American,18,1.12,Beverage
-Pad Thai Deluxe,Thai,26,1.29,Starter
-Pancakes Spicy,Continental,13,0.82,Beverage
-Bun Cha Spicy,Vietnamese,14,1.17,Main Course
-Bruschetta Classic,Italian,8,1.12,Dessert
-Pasta Alfredo Spicy,Italian,15,0.82,Main Course
-Dim Sum Deluxe,Chinese,11,1.21,Beverage
-Che Ba Mau Deluxe,Vietnamese,20,1.35,Beverage
-Tempura,Japanese,11,0.95,Main Course
-Ramen Spicy,Japanese,10,1.46,Main Course
-Chow Mein Spicy,Chinese,13,1.22,Beverage
-Burrito Classic,Mexican,30,0.82,Dessert
-Paneer Butter Masala,Indian,8,1.0,Main Course
-Tiramisu Classic,Italian,26,1.24,Dessert
-Sushi Roll Special,Japanese,23,0.89,Dessert
-Mango Sticky Rice Spicy,Thai,23,1.06,Beverage
-Che Ba Mau Classic,Vietnamese,27,1.2,Beverage
-Hot Dog Spicy,American,24,1.46,Beverage
-Green Curry,Thai,29,1.17,Beverage
-Butter Naan Deluxe,Indian,18,1.45,Starter
-Paneer Butter Masala Classic,Indian,10,0.85,Dessert
-Tiramisu Spicy,Italian,28,1.0,Main Course
-Mango Sticky Rice,Thai,15,0.87,Beverage
-Fried Chicken Classic,American,26,1.42,Starter
-Che Ba Mau Special,Vietnamese,27,1.02,Dessert
-Tiramisu,Italian,29,1.18,Main Course
-Baklava,Greek,30,1.34,Beverage
-Spring Rolls Spicy,Chinese,23,1.19,Main Course
-Tiramisu Classic,Italian,16,1.19,Dessert
-Burger Special,American,28,1.09,Main Course
-Caesar Salad Deluxe,Continental,22,0.96,Main Course
-Hot Dog,American,8,1.07,Starter
-Pad Thai Classic,Thai,28,1.31,Dessert
-Banh Mi,Vietnamese,27,1.11,Main Course
-Gulab Jamun Spicy,Indian,27,0.92,Starter
-Matcha Ice Cream Special,Japanese,30,0.91,Main Course
-Greek Salad,Greek,11,1.19,Main Course
-Greek Salad Special,Greek,11,1.05,Dessert
-Green Curry Deluxe,Thai,19,1.48,Beverage
-Kung Pao Chicken Deluxe,Chinese,27,1.46,Main Course
-Dal Tadka Spicy,Indian,15,1.37,Dessert
-Green Curry Special,Thai,20,1.3,Dessert
-Tempura Special,Japanese,26,1.49,Main Course
-Margherita Pizza Deluxe,Italian,25,1.22,Starter
-Caesar Salad Spicy,Continental,17,1.48,Main Course
-French Fries Spicy,Continental,29,1.43,Dessert
-Pasta Alfredo Spicy,Italian,20,0.98,Starter
-Nachos,Mexican,14,0.87,Beverage
-Green Curry Classic,Thai,23,1.34,Dessert
-Sushi Roll Classic,Japanese,13,0.85,Dessert
-French Fries Spicy,Continental,12,0.81,Main Course
-Tacos,Mexican,27,1.43,Dessert
-Grilled Chicken Deluxe,Continental,13,0.84,Beverage
-Cheesecake Spicy,Continental,22,1.22,Main Course
-Che Ba Mau Spicy,Vietnamese,16,1.34,Starter
-Dim Sum Special,Chinese,24,1.05,Starter
-Souvlaki,Greek,25,1.27,Beverage
-Chicken Biryani Spicy,Indian,8,1.24,Beverage
-Lasagna Special,Italian,9,1.31,Main Course
-Quesadilla Deluxe,Mexican,28,1.3,Beverage
-Margherita Pizza Deluxe,Italian,28,0.95,Beverage
-Pancakes Special,Continental,20,0.96,Starter
-Che Ba Mau,Vietnamese,28,1.49,Main Course
-Tom Yum Soup Spicy,Thai,9,1.03,Beverage
-Burrito,Mexican,26,1.38,Dessert
-Miso Soup,Japanese,14,1.33,Beverage
-Dim Sum Spicy,Chinese,13,0.91,Starter
-Lasagna Classic,Italian,20,1.07,Main Course
-Satay Spicy,Thai,11,1.46,Dessert
-Greek Salad,Greek,8,1.31,Beverage
-Green Curry Classic,Thai,26,1.26,Main Course
-Pad Thai,Thai,9,0.99,Beverage
-Quesadilla Deluxe,Mexican,21,0.87,Dessert
-Burrito Deluxe,Mexican,15,1.07,Main Course
-Burger Deluxe,American,12,1.14,Dessert
-Grilled Chicken Deluxe,Continental,14,1.32,Dessert
-Spring Rolls Spicy,Chinese,24,0.91,Main Course
-Pasta Alfredo Spicy,Italian,8,1.35,Starter
-Spring Rolls,Vietnamese,17,0.95,Dessert
-Pad Thai Special,Thai,13,1.25,Beverage
-Burger Classic,American,18,1.07,Dessert
-Dim Sum Spicy,Chinese,9,1.07,Main Course
-Bruschetta,Italian,16,0.98,Main Course
-Churros Classic,Mexican,29,1.37,Main Course
-Lasagna,Italian,10,1.26,Dessert
-Pasta Alfredo Deluxe,Italian,24,1.18,Starter
-Ramen Deluxe,Japanese,17,1.32,Main Course
-Ramen Special,Japanese,11,1.38,Dessert
-Pancakes Special,Continental,12,1.03,Dessert
-Matcha Ice Cream Classic,Japanese,29,0.87,Dessert
-Pho Special,Vietnamese,22,1.42,Main Course
-Gyro,Greek,27,1.47,Starter
-Fried Rice Deluxe,Chinese,17,1.47,Beverage
-Hot Dog Special,American,10,1.38,Starter
-Ramen Special,Japanese,18,1.13,Starter
-Souvlaki Spicy,Greek,11,0.88,Starter
-Mango Sticky Rice,Thai,14,1.47,Main Course
-Mango Sticky Rice Classic,Thai,25,1.42,Starter
-Dal Tadka Deluxe,Indian,25,1.45,Main Course
-Dal Tadka Special,Indian,20,1.06,Beverage
-Tom Yum Soup Special,Thai,14,0.82,Beverage
-Dal Tadka Spicy,Indian,18,1.3,Starter
-Milkshake Deluxe,American,28,0.93,Dessert
-Green Curry Special,Thai,10,1.24,Main Course
-French Fries Classic,Continental,16,1.02,Main Course
-Grilled Chicken,Continental,20,0.81,Beverage
-Matcha Ice Cream Deluxe,Japanese,24,1.38,Starter
-Gyro Deluxe,Greek,29,1.25,Dessert
-Caesar Salad Classic,Continental,16,1.0,Beverage
-Tempura Deluxe,Japanese,19,1.35,Main Course
-Pancakes Classic,Continental,9,1.18,Beverage
-Milkshake Special,American,16,0.86,Main Course
-Green Curry,Thai,23,0.89,Dessert
-Tacos Classic,Mexican,13,1.05,Starter
-Margherita Pizza Classic,Italian,28,1.44,Dessert
-Moussaka Deluxe,Greek,18,1.01,Beverage
-Spring Rolls Spicy,Vietnamese,17,1.32,Main Course
-Dim Sum Spicy,Chinese,28,1.04,Beverage
-Tempura Spicy,Japanese,23,1.3,Dessert
-Chow Mein Deluxe,Chinese,25,0.94,Beverage
-Caesar Salad Spicy,Continental,27,0.9,Main Course
-Mango Sticky Rice,Thai,11,1.07,Beverage
-Pho,Vietnamese,10,1.23,Dessert
-Sushi Roll Spicy,Japanese,26,1.11,Main Course
-Tiramisu Special,Italian,29,1.29,Starter
-Greek Salad Spicy,Greek,22,1.24,Main Course
-Gulab Jamun Spicy,Indian,23,1.3,Starter
-Baklava Deluxe,Greek,26,1.02,Main Course
-Che Ba Mau Spicy,Vietnamese,18,0.82,Main Course
-Pad Thai,Thai,19,0.83,Starter
-Milkshake Deluxe,American,15,0.83,Dessert
-Paneer Butter Masala Special,Indian,10,1.12,Starter
-Pasta Alfredo Spicy,Italian,30,0.82,Beverage
-Butter Naan Spicy,Indian,25,1.45,Dessert
-Lasagna Deluxe,Italian,25,0.83,Main Course
-Chow Mein,Chinese,11,0.84,Starter
-Bun Cha Deluxe,Vietnamese,18,0.8,Starter
-Tiramisu Spicy,Italian,14,1.28,Starter
-Burger Special,American,29,1.48,Beverage
-Burrito Deluxe,Mexican,23,1.23,Starter
-Satay Deluxe,Thai,21,0.85,Main Course
-Pad Thai,Thai,15,0.83,Dessert
-Pad Thai,Thai,19,1.49,Beverage
-Dal Tadka Special,Indian,22,1.41,Dessert
-Matcha Ice Cream Special,Japanese,13,1.33,Starter
-Moussaka Deluxe,Greek,24,0.94,Main Course
-Cheesecake,Continental,30,1.27,Dessert
-Che Ba Mau Deluxe,Vietnamese,14,0.91,Main Course
-Mango Sticky Rice,Thai,29,0.95,Dessert
-Butter Naan Classic,Indian,28,1.15,Starter
-Tiramisu,Italian,20,1.37,Dessert
-Paneer Butter Masala Classic,Indian,13,0.95,Main Course
-Caesar Salad Spicy,Continental,14,1.05,Beverage
-Pasta Alfredo,Italian,22,1.1,Starter
-Miso Soup Deluxe,Japanese,8,1.08,Starter
-Pho,Vietnamese,27,1.29,Main Course
-Gyro,Greek,21,1.35,Main Course
-Quesadilla Spicy,Mexican,26,0.83,Beverage
-Pho,Vietnamese,20,1.05,Main Course
-Cheesecake,Continental,30,1.4,Main Course
-Tiramisu Classic,Italian,24,1.32,Beverage
-Burrito,Mexican,11,1.16,Beverage
-Mango Sticky Rice,Thai,16,1.07,Starter
-Tom Yum Soup Special,Thai,23,1.15,Beverage
-Churros,Mexican,30,1.09,Main Course
-Spring Rolls,Chinese,28,1.2,Beverage
-Dim Sum Spicy,Chinese,15,1.1,Starter
-Kung Pao Chicken Deluxe,Chinese,22,0.81,Main Course
-Tempura Deluxe,Japanese,28,1.41,Starter
-Pho Special,Vietnamese,9,1.07,Starter
-Moussaka,Greek,24,0.81,Starter
-Mango Sticky Rice Special,Thai,23,1.28,Main Course
-Grilled Chicken Special,Continental,14,0.84,Main Course
-Chow Mein Special,Chinese,8,1.12,Dessert
-Satay Spicy,Thai,21,1.39,Main Course
-Nachos Special,Mexican,11,1.48,Starter
-French Fries Classic,Continental,29,0.97,Beverage
-Baklava,Greek,24,1.15,Starter
-Dim Sum Special,Chinese,23,1.23,Main Course
-Fried Chicken,American,28,1.33,Beverage
-Fried Rice Classic,Chinese,9,1.27,Beverage
-Tempura Spicy,Japanese,28,1.18,Starter
-Tempura Classic,Japanese,16,0.92,Dessert
-Paneer Butter Masala,Indian,21,1.4,Beverage
-Pancakes,Continental,10,1.02,Dessert
-Pho Special,Vietnamese,12,1.08,Main Course
-Paneer Butter Masala Spicy,Indian,9,1.03,Beverage
-Baklava Spicy,Greek,18,1.03,Starter
-Green Curry Deluxe,Thai,20,1.44,Starter
-Tom Yum Soup,Thai,13,1.08,Main Course
-French Fries Deluxe,Continental,10,1.26,Main Course
-Quesadilla Classic,Mexican,27,1.16,Beverage
-Pho Special,Vietnamese,10,1.2,Dessert
-Margherita Pizza Spicy,Italian,16,1.39,Starter
-Pad Thai Spicy,Thai,23,1.47,Starter
-Banh Mi Spicy,Vietnamese,11,0.87,Beverage
-Gulab Jamun Special,Indian,20,1.3,Starter
-Miso Soup Special,Japanese,29,0.86,Beverage
-Margherita Pizza Spicy,Italian,16,0.9,Beverage
-Apple Pie Special,American,26,1.45,Dessert
-Dim Sum,Chinese,30,0.93,Beverage
-Milkshake Special,American,18,1.4,Dessert
-Grilled Chicken,Continental,12,1.25,Beverage
-Burger,American,27,1.1,Beverage
-Pho,Vietnamese,29,1.49,Beverage
-Sushi Roll Spicy,Japanese,27,1.2,Main Course
-Ramen Deluxe,Japanese,8,0.83,Dessert
-Chicken Biryani Special,Indian,28,1.36,Dessert
-Chicken Biryani Spicy,Indian,25,0.95,Dessert
-Pasta Alfredo Spicy,Italian,30,1.39,Starter
-Banh Mi Spicy,Vietnamese,8,1.3,Starter
-Butter Naan,Indian,28,1.2,Main Course
-Grilled Chicken Deluxe,Continental,19,0.97,Starter
-Churros Special,Mexican,30,0.84,Main Course
-Burger,American,19,1.2,Beverage
-Hot Dog Special,American,20,1.35,Starter
-Miso Soup,Japanese,13,1.17,Main Course
-Burger,American,17,1.0,Dessert
-Milkshake Special,American,13,1.28,Starter
-Dim Sum Deluxe,Chinese,16,1.02,Starter
-Chicken Biryani,Indian,29,0.98,Dessert
-Tiramisu,Italian,21,0.85,Starter
-Fried Chicken Special,American,8,1.46,Beverage
-French Fries Spicy,Continental,30,1.19,Main Course
-Banh Mi Spicy,Vietnamese,24,1.48,Starter
-Chow Mein Special,Chinese,27,1.4,Starter
-Pasta Alfredo Classic,Italian,18,0.82,Dessert
-Fried Chicken Classic,American,19,1.44,Dessert
-Tom Yum Soup Special,Thai,20,1.11,Dessert
-Souvlaki Spicy,Greek,10,1.25,Dessert
-Tacos,Mexican,9,1.28,Dessert
-Souvlaki Special,Greek,18,1.49,Starter
-Fried Rice Classic,Chinese,11,0.99,Dessert
-Hot Dog Classic,American,17,1.49,Beverage
-Fried Chicken Spicy,American,17,0.86,Dessert
-Bun Cha,Vietnamese,29,1.19,Starter
-Dim Sum Spicy,Chinese,9,1.29,Beverage
-Tiramisu Classic,Italian,20,1.26,Starter
-Gulab Jamun Classic,Indian,12,1.05,Dessert
-Miso Soup Deluxe,Japanese,29,1.43,Starter
-Mango Sticky Rice Spicy,Thai,27,1.03,Dessert
-Tacos Special,Mexican,10,1.3,Starter
-Margherita Pizza Special,Italian,26,1.0,Dessert
-Quesadilla Classic,Mexican,8,1.19,Dessert
-Pho Spicy,Vietnamese,19,1.22,Starter
-Tempura Deluxe,Japanese,16,1.36,Beverage
-Tom Yum Soup Special,Thai,29,0.96,Dessert
-Spring Rolls,Vietnamese,23,1.14,Main Course
-Chow Mein,Chinese,10,1.48,Main Course
-Mango Sticky Rice,Thai,23,1.22,Beverage
-Lasagna Deluxe,Italian,28,1.11,Dessert
-Paneer Butter Masala Special,Indian,26,0.89,Dessert
-Apple Pie,American,24,1.04,Starter
-Pad Thai Spicy,Thai,20,1.08,Main Course
-Green Curry Classic,Thai,26,1.13,Dessert
-Dim Sum Deluxe,Chinese,26,0.85,Main Course
-Pad Thai Special,Thai,28,0.81,Starter
-Chicken Biryani,Indian,26,1.16,Main Course
-Baklava Classic,Greek,27,1.14,Dessert
-Satay Spicy,Thai,17,0.99,Main Course
-Burrito Deluxe,Mexican,21,0.93,Main Course
-Grilled Chicken Classic,Continental,19,1.05,Starter
-Dal Tadka Deluxe,Indian,14,1.05,Dessert
-Bun Cha,Vietnamese,14,1.07,Starter
-Spring Rolls Deluxe,Chinese,22,0.82,Starter
-Grilled Chicken Classic,Continental,16,0.84,Main Course
-Gulab Jamun Deluxe,Indian,20,0.96,Starter
-Tiramisu Classic,Italian,29,1.5,Beverage
-Pasta Alfredo Classic,Italian,8,1.21,Main Course
-Dal Tadka,Indian,13,1.25,Main Course
-Tiramisu Classic,Italian,11,1.39,Beverage
-Baklava,Greek,26,0.93,Dessert
-Gulab Jamun Classic,Indian,23,0.81,Beverage
-Mango Sticky Rice Classic,Thai,20,1.2,Beverage
-Tacos Spicy,Mexican,12,1.23,Dessert
-Churros Deluxe,Mexican,10,1.32,Beverage
-Gulab Jamun Deluxe,Indian,14,1.0,Beverage
-Gulab Jamun Spicy,Indian,19,0.96,Beverage
-Baklava Spicy,Greek,22,1.06,Dessert
-Green Curry Special,Thai,21,0.9,Main Course
-Fried Chicken Special,American,21,1.43,Beverage
-Moussaka Deluxe,Greek,16,1.09,Beverage
-Banh Mi,Vietnamese,26,1.42,Starter
-Pad Thai Spicy,Thai,26,1.17,Starter
-Miso Soup,Japanese,11,0.95,Dessert
-Baklava Spicy,Greek,24,0.98,Dessert
-Dim Sum,Chinese,23,1.07,Beverage
-Nachos Special,Mexican,27,0.92,Main Course
-Souvlaki Special,Greek,14,0.89,Dessert
-Paneer Butter Masala Deluxe,Indian,20,1.2,Dessert
-Green Curry Special,Thai,16,0.91,Beverage
-Quesadilla Deluxe,Mexican,19,0.87,Beverage
-French Fries Special,Continental,11,1.42,Dessert
-Butter Naan Spicy,Indian,28,1.25,Dessert
-French Fries Deluxe,Continental,15,0.85,Dessert
-Hot Dog Deluxe,American,22,1.26,Beverage
-Miso Soup Classic,Japanese,19,1.34,Main Course
-Fried Chicken Deluxe,American,15,1.09,Dessert
-Tiramisu,Italian,27,0.85,Dessert
-Bun Cha Deluxe,Vietnamese,17,1.17,Dessert
+Matcha Ice Cream Special,Japanese,8,0.98,Main Course
+Burger,American,32,0.98,Main Course
+Che Ba Mau House,Vietnamese,25,1.56,Starter
+Spring Rolls House,Chinese,10,1.48,Beverage
+Greek Salad House,Greek,10,1.59,Dessert
+Burger Spicy,American,31,1.05,Dessert
+Ramen House,Japanese,16,0.86,Main Course
+Pho Deluxe,Vietnamese,22,0.9,Beverage
+Pasta Alfredo Classic,Italian,16,1.1,Main Course
+Fried Chicken Special,American,34,1.37,Dessert
+Fried Chicken House,American,17,0.88,Starter
+Tacos House,Mexican,8,1.45,Starter
+Banh Mi Deluxe,Vietnamese,22,1.18,Beverage
+Quesadilla,Mexican,32,1.18,Starter
+Moussaka Chef's,Greek,40,1.35,Main Course
+Bhindi Masala Chef's,Indian,32,1.39,Starter
+Satay Chef's,Thai,38,1.09,Main Course
+Caesar Salad Deluxe,Continental,32,1.05,Main Course
+Churros Spicy,Mexican,34,1.49,Beverage
+Tom Yum Soup House,Thai,23,0.83,Beverage
+Fried Chicken Chef's,American,26,1.51,Starter
+Gyro Spicy,Greek,8,1.22,Starter
+Lasagna Chef's,Italian,15,1.03,Dessert
+Greek Salad Classic,Greek,25,1.31,Dessert
+Baklava Chef's,Greek,33,1.4,Main Course
+Pancakes Classic,Continental,30,0.83,Dessert
+Chole Bhature Spicy,Indian,36,1.08,Beverage
+Tiramisu Classic,Italian,8,1.34,Main Course
+Matcha Ice Cream,Japanese,22,1.12,Dessert
+Bruschetta Special,Italian,14,0.81,Starter
+Moussaka Deluxe,Greek,34,1.2,Beverage
+French Fries Special,Continental,34,1.49,Starter
+Lasagna House,Italian,28,1.24,Dessert
+Moussaka Special,Greek,37,1.47,Beverage
+Ramen Classic,Japanese,15,0.97,Dessert
+Churros Classic,Mexican,27,1.37,Starter
+Gyro Chef's,Greek,35,1.04,Beverage
+Tempura Classic,Japanese,36,0.92,Main Course
+Apple Pie Classic,American,9,1.24,Main Course
+Spring Rolls,Chinese,27,1.0,Dessert
+Margherita Pizza Classic,Italian,40,1.34,Dessert
+Dim Sum,Chinese,23,1.05,Starter
+Green Curry Classic,Thai,18,1.46,Dessert
+Grilled Chicken Classic,Continental,8,1.41,Main Course
+Spring Rolls Chef's,Chinese,24,1.01,Dessert
+Margherita Pizza Deluxe,Italian,13,1.0,Dessert
+Gyro Special,Greek,21,0.91,Main Course
+Satay Classic,Thai,34,1.36,Main Course
+Tiramisu Chef's,Italian,26,1.54,Dessert
+French Fries Deluxe,Continental,32,1.31,Dessert
+Hot Dog Deluxe,American,19,1.05,Dessert
+Pancakes,Continental,17,1.24,Starter
+Banh Mi Classic,Vietnamese,23,0.8,Dessert
+Green Curry Chef's,Thai,26,0.89,Starter
+Matcha Ice Cream House,Japanese,21,1.27,Dessert
+Cheesecake Chef's,Continental,13,0.99,Main Course
+Moussaka,Greek,22,1.19,Starter
+Hyderabadi Haleem House,Indian,23,1.46,Dessert
+Bruschetta,Italian,10,1.51,Beverage
+Pav Bhaji Classic,Indian,34,1.49,Beverage
+Pho House,Vietnamese,9,1.48,Dessert
+Bun Cha House,Vietnamese,11,0.87,Main Course
+Caesar Salad Chef's,Continental,34,0.95,Beverage
+Churros Special,Mexican,10,1.07,Beverage
+Fried Rice House,Chinese,25,1.09,Starter
+Gyro,Greek,28,1.11,Main Course
+Fried Chicken Spicy,American,17,1.15,Starter
+Bun Cha Classic,Vietnamese,33,1.04,Beverage
+Pasta Alfredo Spicy,Italian,22,1.31,Main Course
+Mango Sticky Rice Chef's,Thai,22,1.06,Starter
+Kung Pao Chicken Special,Chinese,28,1.18,Dessert
+Spring Rolls Deluxe,Vietnamese,14,1.48,Dessert
+Miso Soup Chef's,Japanese,40,1.46,Main Course
+French Fries Classic,Continental,10,0.94,Dessert
+Grilled Chicken Special,Continental,14,0.97,Starter
+Burger Deluxe,American,28,0.86,Dessert
+Margherita Pizza Chef's,Italian,40,1.27,Starter
+Greek Salad,Greek,31,1.27,Main Course
+Milkshake Chef's,American,28,1.49,Main Course
+Bruschetta Classic,Italian,13,1.15,Starter
+Che Ba Mau Spicy,Vietnamese,31,1.46,Beverage
+Souvlaki Spicy,Greek,35,1.03,Beverage
+Pasta Alfredo House,Italian,23,1.3,Dessert
+Milkshake Classic,American,38,1.01,Starter
+Chow Mein,Chinese,22,0.86,Main Course
+Green Curry,Thai,12,1.19,Beverage
+Tom Yum Soup,Thai,18,0.93,Dessert
+Chicken Biryani House,Indian,13,1.27,Main Course
+Banh Mi Special,Vietnamese,14,1.57,Beverage
+Chow Mein Deluxe,Chinese,19,1.59,Dessert
+Tiramisu House,Italian,33,1.25,Main Course
+Cheesecake House,Continental,18,1.18,Beverage
+Paneer Butter Masala Special,Indian,26,1.27,Main Course
+Pad Thai Deluxe,Thai,30,0.84,Beverage
+Pad Thai Classic,Thai,11,1.23,Starter
+Grilled Chicken,Continental,18,1.1,Dessert
+Dim Sum Deluxe,Chinese,23,1.54,Main Course
+Pasta Alfredo Deluxe,Italian,27,0.83,Main Course
+Banh Mi Chef's,Vietnamese,14,0.84,Dessert
+Caesar Salad Spicy,Continental,25,1.19,Beverage
+Moussaka House,Greek,25,1.49,Main Course
+Pancakes Spicy,Continental,19,1.53,Main Course
+Green Curry Special,Thai,26,1.58,Main Course
+Tempura Special,Japanese,27,1.04,Starter
+Pho Chef's,Vietnamese,31,1.09,Beverage
+Caesar Salad,Continental,24,1.2,Dessert
+Tacos Chef's,Mexican,15,1.48,Beverage
+Baklava Special,Greek,32,1.47,Beverage
+Souvlaki Chef's,Greek,39,1.17,Beverage
+Churros Deluxe,Mexican,8,1.53,Main Course
+Grilled Chicken Deluxe,Continental,8,1.45,Dessert
+Fried Chicken,American,39,0.9,Dessert
+Burrito Special,Mexican,32,0.91,Beverage
+Tiramisu Special,Italian,13,0.82,Dessert
+Rogan Josh,Indian,32,0.82,Starter
+Idli Sambar Deluxe,Indian,8,1.05,Starter
+Matcha Ice Cream Chef's,Japanese,30,1.28,Starter
+Apple Pie Spicy,American,24,1.35,Main Course
+Mango Sticky Rice,Thai,22,0.89,Beverage
+Dim Sum House,Chinese,16,0.99,Dessert
+Margherita Pizza,Italian,21,1.5,Beverage
+Green Curry Spicy,Thai,22,1.3,Dessert
+Pho Special,Vietnamese,25,1.54,Dessert
+Apple Pie House,American,38,1.29,Dessert
+Rogan Josh Chef's,Indian,21,1.09,Beverage
+Mango Sticky Rice Spicy,Thai,28,1.15,Main Course
+Ramen Special,Japanese,35,1.19,Starter
+Kung Pao Chicken Chef's,Chinese,32,1.51,Main Course
+French Fries Spicy,Continental,38,1.34,Dessert
+Che Ba Mau Chef's,Vietnamese,33,1.19,Main Course
+Spring Rolls Special,Chinese,32,0.89,Starter
+Burrito Classic,Mexican,28,1.13,Main Course
+Dim Sum Classic,Chinese,17,1.28,Dessert
+Satay Deluxe,Thai,34,0.97,Starter
+Lasagna Special,Italian,21,0.92,Beverage
+Grilled Chicken House,Continental,29,1.2,Dessert
+Vada Pav,Indian,20,1.53,Dessert
+Sushi Roll Classic,Japanese,35,1.03,Main Course
+Green Curry House,Thai,13,1.18,Starter
+Fried Rice Special,Chinese,25,0.83,Beverage
+Banh Mi,Vietnamese,30,0.9,Dessert
+Cheesecake,Continental,16,1.23,Dessert
+Quesadilla House,Mexican,31,1.4,Dessert
+Kung Pao Chicken Deluxe,Chinese,28,1.13,Main Course
+Hot Dog Chef's,American,40,1.19,Main Course
+Moussaka Classic,Greek,22,1.02,Dessert
+Nachos Special,Mexican,36,1.33,Starter
+Mango Sticky Rice Classic,Thai,28,1.33,Starter
+Hot Dog Classic,American,23,1.4,Main Course
+Caesar Salad Special,Continental,30,1.33,Dessert
+Baklava Spicy,Greek,37,0.89,Starter
+Keema Pav Chef's,Indian,35,1.08,Main Course
+Pani Puri,Indian,33,1.03,Main Course
+Keema Pav Spicy,Indian,30,1.17,Beverage
+Hyderabadi Haleem Deluxe,Indian,27,1.58,Dessert
+Pho,Vietnamese,20,1.56,Dessert
+Hot Dog House,American,24,1.11,Dessert
+Souvlaki Classic,Greek,38,1.4,Starter
+Lasagna,Italian,20,1.16,Beverage
+Apple Pie,American,12,1.37,Beverage
+Bun Cha,Vietnamese,18,1.46,Dessert
+Fried Rice Deluxe,Chinese,33,1.36,Dessert
+Burrito Chef's,Mexican,27,1.59,Main Course
+Kung Pao Chicken Spicy,Chinese,18,1.49,Beverage
+Margherita Pizza Spicy,Italian,27,1.32,Beverage
+Chicken Biryani,Indian,13,0.9,Dessert
+Grilled Chicken Chef's,Continental,35,0.96,Beverage
+Greek Salad Chef's,Greek,40,1.28,Starter
+Ramen Spicy,Japanese,11,1.13,Main Course
+Bun Cha Special,Vietnamese,32,0.86,Starter
+Miso Soup Spicy,Japanese,12,0.8,Main Course
+Milkshake House,American,10,0.86,Starter
+Quesadilla Chef's,Mexican,26,1.16,Main Course
+Kheer House,Indian,39,1.23,Beverage
+Hot Dog Spicy,American,18,1.18,Starter
+Bun Cha Spicy,Vietnamese,11,1.32,Main Course
+Nachos Classic,Mexican,33,0.97,Beverage
+Tiramisu,Italian,31,1.19,Dessert
+Appam Stew Classic,Indian,36,0.8,Main Course
+Greek Salad Special,Greek,30,0.95,Beverage
+Che Ba Mau Classic,Vietnamese,27,1.13,Main Course
+Fried Rice Classic,Chinese,23,1.34,Main Course
+Matcha Ice Cream Spicy,Japanese,13,0.99,Dessert
+Tempura Deluxe,Japanese,9,1.0,Dessert
+Hyderabadi Haleem Chef's,Indian,37,0.94,Starter
+Kofta Curry Chef's,Indian,39,1.2,Starter
+Milkshake,American,21,1.55,Beverage
+Milkshake Special,American,18,0.83,Main Course
+Sev Puri,Indian,26,1.22,Starter
+Souvlaki Special,Greek,24,1.2,Dessert
+Fish Curry Classic,Indian,11,1.33,Dessert
+Gyro Deluxe,Greek,28,1.16,Starter
+Miso Soup Classic,Japanese,9,1.5,Main Course
+Tacos,Mexican,30,1.41,Dessert
+Satay Spicy,Thai,40,0.96,Starter
+Gyro House,Greek,8,1.16,Main Course
+Cheesecake Deluxe,Continental,35,1.12,Main Course
+Kadhi Pakora,Indian,23,1.27,Beverage
+Satay House,Thai,8,1.59,Dessert
+Baingan Bharta Classic,Indian,27,0.84,Beverage
+Quesadilla Spicy,Mexican,14,1.25,Main Course
+Samosa Chef's,Indian,13,1.25,Main Course
+Ramen Deluxe,Japanese,8,0.98,Beverage
+Mango Sticky Rice Deluxe,Thai,15,0.9,Main Course
+Chow Mein House,Chinese,8,1.48,Starter
+Tacos Classic,Mexican,14,1.14,Beverage
+Paneer Butter Masala Classic,Indian,31,1.34,Starter
+Fried Rice Spicy,Chinese,28,1.06,Beverage
+Masala Dosa Classic,Indian,9,1.25,Dessert
+Bun Cha Chef's,Vietnamese,11,1.56,Starter
+Bhindi Masala Deluxe,Indian,38,1.28,Starter
+Banh Mi Spicy,Vietnamese,39,1.1,Starter
+Tom Yum Soup Spicy,Thai,32,1.37,Starter
+Bruschetta Chef's,Italian,14,1.12,Beverage
+Chicken Biryani Special,Indian,39,1.19,Beverage
+Spring Rolls Classic,Vietnamese,23,1.43,Dessert
+Fried Rice Chef's,Chinese,21,0.83,Dessert
+Pani Puri Spicy,Indian,33,1.4,Main Course
+Pad Thai Chef's,Thai,26,1.6,Starter
+Ramen Chef's,Japanese,17,1.55,Beverage
+Tacos Deluxe,Mexican,23,1.01,Beverage
+Dal Tadka Classic,Indian,23,1.3,Dessert
+Fried Chicken Classic,American,19,1.18,Dessert
+Sushi Roll House,Japanese,16,1.15,Beverage
+Baklava House,Greek,40,1.41,Dessert
+Ramen,Japanese,12,0.85,Beverage
+Tacos Spicy,Mexican,10,1.35,Starter
+Burger Special,American,9,1.32,Beverage
+Spring Rolls Spicy,Chinese,20,1.21,Dessert
+Burger Classic,American,16,0.97,Main Course
+Dim Sum Spicy,Chinese,8,1.06,Main Course
+Nachos Spicy,Mexican,29,1.53,Dessert
+Burger Chef's,American,17,1.36,Beverage
+Bruschetta House,Italian,35,0.91,Beverage
+Chow Mein Spicy,Chinese,32,1.03,Main Course
+Baklava Classic,Greek,35,0.84,Beverage
+Burrito Spicy,Mexican,23,1.01,Beverage
+Churros Chef's,Mexican,21,0.97,Main Course
+Gulab Jamun Spicy,Indian,17,1.02,Main Course
+Dim Sum Special,Chinese,30,1.09,Main Course
+Pho Spicy,Vietnamese,19,1.08,Starter
+Appam Stew,Indian,23,1.31,Starter
+Satay Special,Thai,22,1.17,Starter
+Grilled Chicken Spicy,Continental,34,1.21,Beverage
+Cheesecake Spicy,Continental,22,1.04,Beverage
+Souvlaki Deluxe,Greek,14,1.52,Main Course
+Shahi Paneer Spicy,Indian,13,1.1,Dessert
+Margherita Pizza Special,Italian,35,1.42,Dessert
+Veg Pulao House,Indian,35,0.86,Main Course
+French Fries,Continental,33,0.82,Starter
+Moussaka Spicy,Greek,16,1.13,Main Course
+Samosa Classic,Indian,36,1.52,Dessert
+Pancakes Deluxe,Continental,39,1.11,Main Course
+Paneer Butter Masala House,Indian,15,1.55,Dessert
+Paneer Butter Masala,Indian,13,1.37,Main Course
+Che Ba Mau Special,Vietnamese,29,1.02,Beverage
+Chicken Biryani Deluxe,Indian,21,1.25,Starter
+Sev Puri Chef's,Indian,19,1.33,Starter
+Dim Sum Chef's,Chinese,38,0.97,Dessert
+Pho Classic,Vietnamese,11,1.18,Main Course
+Gulab Jamun Special,Indian,37,1.28,Main Course
+Chole Bhature Special,Indian,32,0.92,Beverage
+Nachos Deluxe,Mexican,17,0.84,Beverage
+Hot Dog,American,14,1.57,Starter
+Bruschetta Spicy,Italian,32,1.17,Starter
+Hot Dog Special,American,22,1.27,Beverage
+Satay,Thai,37,1.2,Beverage
+Chole Bhature Deluxe,Indian,29,1.03,Main Course
+Fried Chicken Deluxe,American,37,1.0,Dessert
+Sushi Roll Spicy,Japanese,9,0.83,Dessert
+Pancakes Chef's,Continental,25,1.51,Beverage
+Apple Pie Deluxe,American,11,1.05,Starter
+Tacos Special,Mexican,40,1.6,Main Course
+Margherita Pizza House,Italian,33,0.98,Starter
+Milkshake Deluxe,American,22,1.05,Beverage
+Tom Yum Soup Classic,Thai,35,1.51,Starter
+Tempura Spicy,Japanese,15,1.41,Main Course
+Kung Pao Chicken,Chinese,21,0.92,Main Course
+Tom Yum Soup Special,Thai,27,0.87,Starter
+Apple Pie Chef's,American,37,1.51,Dessert
+Burrito House,Mexican,33,1.47,Beverage
+Green Curry Deluxe,Thai,31,1.35,Dessert
+Sushi Roll Deluxe,Japanese,22,1.15,Beverage
+Pad Thai Spicy,Thai,28,0.99,Beverage
+Nachos Chef's,Mexican,11,1.51,Beverage
+Lasagna Classic,Italian,40,1.31,Starter
+Nachos House,Mexican,16,0.85,Main Course
+Baklava,Greek,29,0.87,Dessert
+Quesadilla Classic,Mexican,22,1.04,Starter
+Banh Mi House,Vietnamese,11,0.95,Beverage
+Pad Thai,Thai,18,1.19,Main Course
+Veg Pulao Spicy,Indian,29,1.27,Dessert
+Apple Pie Special,American,21,1.43,Beverage
+Miso Soup Special,Japanese,24,1.01,Dessert
+Kheer Special,Indian,33,1.06,Dessert
+Souvlaki,Greek,27,1.21,Main Course
+Cheesecake Classic,Continental,27,1.2,Starter
+Sushi Roll Special,Japanese,32,1.19,Starter
+Samosa Spicy,Indian,33,1.53,Starter
+Nachos,Mexican,27,1.55,Dessert
