@@ -253,9 +253,9 @@ class DeliveryTrackerGUI:
         algorithm_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         
         ttk.Label(algorithm_frame, text="Algorithm:", font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
-        self.algorithm_var = tk.StringVar(value="Shortest Path")
+        self.algorithm_var = tk.StringVar(value="A* Search")
         algorithm_combo = ttk.Combobox(algorithm_frame, textvariable=self.algorithm_var, 
-                                     values=["BFS", "DFS", "Shortest Path"], width=15, state="readonly")
+                                     values=["BFS", "DFS", "Dijkstra", "A* Search"], width=15, state="readonly")
         algorithm_combo.pack(side=tk.LEFT, padx=5)
         
         # Basic route buttons
@@ -266,6 +266,8 @@ class DeliveryTrackerGUI:
                   command=self.find_route).pack(side=tk.LEFT, padx=5)
         ttk.Button(basic_buttons_frame, text="⚡ Optimize All", 
                   command=self.optimize_routes).pack(side=tk.LEFT, padx=5)
+        ttk.Button(basic_buttons_frame, text="🏁 Compare Algorithms", 
+                  command=self.compare_algorithms).pack(side=tk.LEFT, padx=5)
         
         # === CUISINE INTEGRATION SECTION ===
         cuisine_frame = ttk.LabelFrame(left_frame, text="🍽️ Smart Delivery Planning")
@@ -379,7 +381,7 @@ class DeliveryTrackerGUI:
 Ready to calculate optimized delivery routes!
 
 FEATURES:
-✓ Multiple pathfinding algorithms (BFS, DFS, Shortest Path)
+✓ Multiple pathfinding algorithms (BFS, DFS, Dijkstra, A*)
 ✓ Cuisine-aware delivery time estimation
 ✓ Real-time dish search and filtering
 ✓ Detailed route analysis with preparation times
@@ -815,7 +817,9 @@ Results will appear here with detailed breakdowns!
                 path = self.routing.find_shortest_path_bfs(start, end)
             elif algorithm == "DFS":
                 path = self.routing.find_shortest_path_dfs(start, end)
-            else:  # Shortest Path
+            elif algorithm == "A* Search":
+                path = self.routing.a_star_search(start, end)
+            else:  # Dijkstra
                 path = self.routing.shortest_path(start, end)
             
             if path:
@@ -841,6 +845,84 @@ Results will appear here with detailed breakdowns!
                 
         except Exception as e:
             messagebox.showerror("Error", f"Route calculation failed: {str(e)}")
+    
+    def compare_algorithms(self):
+        """Compare all pathfinding algorithms"""
+        start = self.start_var.get()
+        end = self.end_var.get()
+        
+        if not start or not end:
+            messagebox.showwarning("Warning", "Please select start and end locations")
+            return
+            
+        if start not in self.graph.nodes or end not in self.graph.nodes:
+            messagebox.showerror("Error", "Invalid start or end location")
+            return
+        
+        try:
+            # Get algorithm comparison results
+            results = self.routing.compare_algorithms(start, end)
+            
+            # Create detailed comparison display
+            result_text = f"\n🏁 ALGORITHM PERFORMANCE COMPARISON\n"
+            result_text += f"{'='*70}\n\n"
+            result_text += f"Route: {start} → {end}\n\n"
+            
+            # Sort by execution time for better presentation
+            sorted_results = sorted(results.items(), key=lambda x: x[1]['execution_time_ms'])
+            
+            # Header
+            result_text += f"{'Algorithm':<12} {'Time(ms)':<10} {'Route Time':<12} {'Path Length':<12} {'Status':<10}\n"
+            result_text += f"{'-'*70}\n"
+            
+            best_route_time = float('inf')
+            best_algorithm = None
+            
+            for algorithm, data in sorted_results:
+                status = "✓ Found" if data['found_path'] else "✗ No Path"
+                route_time_str = f"{data['route_time']:.1f}" if data['route_time'] != float('inf') else "∞"
+                
+                result_text += f"{algorithm:<12} {data['execution_time_ms']:<10.3f} "
+                result_text += f"{route_time_str:<12} {data['path_length']:<12} {status:<10}\n"
+                
+                # Track best route
+                if data['found_path'] and data['route_time'] < best_route_time:
+                    best_route_time = data['route_time']
+                    best_algorithm = algorithm
+            
+            result_text += f"\n🏆 ANALYSIS:\n"
+            if best_algorithm:
+                result_text += f"Best Route: {best_algorithm} (Time: {best_route_time:.1f} minutes)\n"
+                
+                # Show fastest execution
+                fastest = sorted_results[0]
+                result_text += f"Fastest Execution: {fastest[0]} ({fastest[1]['execution_time_ms']:.3f}ms)\n"
+                
+                # Algorithm recommendations
+                result_text += f"\n💡 RECOMMENDATIONS:\n"
+                result_text += f"• For speed: Use BFS or DFS for simple paths\n"
+                result_text += f"• For optimal routes: Use Dijkstra or A* Search\n"
+                result_text += f"• A* Search combines optimality with efficiency\n"
+                
+                # Display best path
+                best_path = results[best_algorithm]['path']
+                if best_path:
+                    result_text += f"\n🗺️ OPTIMAL PATH: {' → '.join(best_path)}\n"
+            else:
+                result_text += f"No path found between {start} and {end}\n"
+            
+            result_text += f"\n{'='*70}\n"
+            
+            # Display results
+            self.route_text.config(state=tk.NORMAL)
+            self.route_text.insert(tk.END, result_text)
+            self.route_text.see(tk.END)
+            self.route_text.config(state=tk.DISABLED)
+            
+            self.log_update(f"Compared all algorithms for route {start} to {end}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Algorithm comparison failed: {str(e)}")
     
     def optimize_routes(self):
         result = "\nRoute Optimization Results:\n"
