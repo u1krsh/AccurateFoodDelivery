@@ -6,6 +6,8 @@ class Driver:
         self.status = "Available"
         self.assigned_deliveries = []
         self.route_history = []
+        self.rating = 5.0 # Default 5 stars
+        self.efficiency_score = 100.0 # Default 100% efficiency
 
     def update_location(self, new_location):
         """Update driver's current location"""

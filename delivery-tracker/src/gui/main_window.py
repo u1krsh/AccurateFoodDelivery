@@ -6,7 +6,6 @@ from datetime import datetime
 import sys
 import os
 
-
 # Add parent directory to path to import our models
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from models.delivery import Delivery
@@ -14,7 +13,11 @@ from models.driver import Driver
 from models.graph import Graph
 from algorithms.routing import Routing
 from utils.image_map_creator import create_image_map
+from utils.real_time_map import create_real_time_map
 from utils.cuisine_time_calculator import CuisineTimeCalculator
+from ml.time_predictor import TimePredictor
+from ml.demand_predictor import DemandPredictor
+from services.assignment_service import AssignmentService
 
 class DeliveryTrackerGUI:
     def __init__(self, root):
@@ -29,11 +32,18 @@ class DeliveryTrackerGUI:
         self.routing = Routing(self.graph)
         self.cuisine_calculator = CuisineTimeCalculator()
         
+        # Initialize ML components
+        self.time_predictor = TimePredictor()
+        self.time_predictor.train() # Train on startup
+        self.demand_predictor = DemandPredictor()
+        self.assignment_service = AssignmentService(self.graph)
+        
         # Coordinate system variables
         self.show_coordinates = tk.BooleanVar(value=True)
         self.grid_size = 50
         self.canvas_click_enabled = tk.BooleanVar(value=False)
         self.pending_intersection_name = None
+        self.distance_var = tk.DoubleVar(value=0.0) # For imported real-time distance
         
         # Create GUI elements
         self.create_widgets()
@@ -114,6 +124,8 @@ class DeliveryTrackerGUI:
                   command=self.clear_map).pack(side=tk.LEFT, padx=5)
         ttk.Button(controls_row1, text="Real Scale View", 
                   command=self.show_real_scale_view).pack(side=tk.LEFT, padx=5)
+        ttk.Button(controls_row1, text="🔥 Show Hotspots", 
+                  command=self.show_hotspots).pack(side=tk.LEFT, padx=5)
         
         # Second row of controls
         controls_row2 = ttk.Frame(controls_frame)
@@ -128,6 +140,8 @@ class DeliveryTrackerGUI:
                   command=lambda: self.create_linear(5)).pack(side=tk.LEFT, padx=5)
         ttk.Button(controls_row2, text="Create from Image", 
                   command=self.open_image_map_creator).pack(side=tk.LEFT, padx=5)
+        ttk.Button(controls_row2, text="Real-Time Map (OSM)", 
+                  command=self.open_real_time_map).pack(side=tk.LEFT, padx=5)
         
         # Coordinate helper
         coord_helper_frame = ttk.LabelFrame(self.map_frame, text="Coordinate Helper")
@@ -178,6 +192,8 @@ class DeliveryTrackerGUI:
                   command=self.update_driver_location).pack(side=tk.LEFT, padx=5)
         ttk.Button(controls_frame, text="Assign Delivery", 
                   command=self.assign_delivery).pack(side=tk.LEFT, padx=5)
+        ttk.Button(controls_frame, text="🤖 Smart Assign", 
+                  command=self.smart_assign_delivery).pack(side=tk.LEFT, padx=5)
         
     def create_deliveries_tab(self):
         # Deliveries Tab
@@ -331,8 +347,16 @@ class DeliveryTrackerGUI:
         smart_calc_frame = ttk.Frame(cuisine_frame)
         smart_calc_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         
-        self.smart_calc_btn = ttk.Button(smart_calc_frame, text="🧠 Calculate Smart Delivery Time", 
-                                        command=lambda: self.calculate_delivery_time_simple())
+        # Distance display
+        self.distance_display_var = tk.StringVar(value="Real-World Distance: Not Set")
+        ttk.Label(smart_calc_frame, textvariable=self.distance_display_var, 
+                 foreground="blue").pack(fill=tk.X, pady=(0, 5))
+        
+        # Trace distance_var to update display
+        self.distance_var.trace_add("write", self.update_distance_display)
+        
+        self.smart_calc_btn = ttk.Button(smart_calc_frame, text="🧠 Calculate AI Delivery Time", 
+                                        command=lambda: self.calculate_delivery_time_ai())
         self.smart_calc_btn.pack(fill=tk.X)
         
         # === RIGHT COLUMN: RESULTS & INFO ===
@@ -442,8 +466,7 @@ Results will appear here with detailed breakdowns!
         ttk.Button(control_frame, text="Refresh", 
                   command=self.refresh_data).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="Clear Log", 
-                  command=self.clear_log).pack(side=tk.LEFT, padx=5)
-    
+                  command=self.clear_log).pack(side=tk.LEFT, padx=5)    
     def on_canvas_click(self, event):
         """Handle canvas click events"""
         if self.canvas_click_enabled.get():
@@ -602,16 +625,8 @@ Results will appear here with detailed breakdowns!
         self.refresh_all_displays()
     
     def add_intersection(self):
-        # Show coordinate helper dialog
-        coord_dialog = CoordinateDialog(self.root, self.graph.nodes)
-        if coord_dialog.result:
-            node_id, x, y = coord_dialog.result
-            if node_id not in self.graph.nodes:
-                self.graph.add_node(node_id, {"x": x, "y": y})
-                self.routing = Routing(self.graph)
-                self.update_location_combos()
-                self.draw_graph()
-                self.log_update(f"Added intersection {node_id} at ({x}, {y})")
+        # Simple dialog for now
+        self.add_intersection_at_coordinates(400, 300)
     
     def add_road(self):
         nodes = list(self.graph.nodes.keys())
@@ -619,15 +634,15 @@ Results will appear here with detailed breakdowns!
             messagebox.showwarning("Warning", "Need at least 2 intersections to add a road")
             return
         
-        # Create road dialog
-        road_dialog = RoadDialog(self.root, nodes)
-        if road_dialog.result:
-            start, end, weight = road_dialog.result
-            if start != end:
-                self.graph.add_edge(start, end, weight)
-                self.routing = Routing(self.graph)
-                self.draw_graph()
-                self.log_update(f"Added road from {start} to {end} (time: {weight} min)")
+        start = simpledialog.askstring("Start Node", f"Start ({', '.join(nodes)}):")
+        end = simpledialog.askstring("End Node", f"End ({', '.join(nodes)}):")
+        weight = simpledialog.askinteger("Weight", "Time (minutes):", minvalue=1)
+        
+        if start in nodes and end in nodes and weight:
+            self.graph.add_edge(start, end, weight)
+            self.routing = Routing(self.graph)
+            self.draw_graph()
+            self.log_update(f"Added road from {start} to {end} (time: {weight} min)")
     
     def clear_map(self):
         self.graph = Graph()
@@ -798,7 +813,7 @@ Results will appear here with detailed breakdowns!
             self.deliveries[delivery_id].update_progress(progress)
             self.refresh_deliveries_display()
             self.log_update(f"Delivery {delivery_id} progress updated by {progress}%")
-    
+
     def find_route(self):
         start = self.start_var.get()
         end = self.end_var.get()
@@ -836,6 +851,7 @@ Results will appear here with detailed breakdowns!
                 result += f"{'='*60}\n"
                 
                 self.route_text.config(state=tk.NORMAL)
+                self.route_text.delete(1.0, tk.END)
                 self.route_text.insert(tk.END, result)
                 self.route_text.see(tk.END)
                 self.route_text.config(state=tk.DISABLED)
@@ -845,915 +861,430 @@ Results will appear here with detailed breakdowns!
                 
         except Exception as e:
             messagebox.showerror("Error", f"Route calculation failed: {str(e)}")
-    
+
     def compare_algorithms(self):
-        """Compare all pathfinding algorithms"""
         start = self.start_var.get()
         end = self.end_var.get()
+        if not start or not end: return
         
-        if not start or not end:
-            messagebox.showwarning("Warning", "Please select start and end locations")
-            return
-            
-        if start not in self.graph.nodes or end not in self.graph.nodes:
-            messagebox.showerror("Error", "Invalid start or end location")
-            return
-        
-        try:
-            # Get algorithm comparison results
-            results = self.routing.compare_algorithms(start, end)
-            
-            # Create detailed comparison display
-            result_text = f"\n🏁 ALGORITHM PERFORMANCE COMPARISON\n"
-            result_text += f"{'='*70}\n\n"
-            result_text += f"Route: {start} → {end}\n\n"
-            
-            # Sort by execution time for better presentation
-            sorted_results = sorted(results.items(), key=lambda x: x[1]['execution_time_ms'])
-            
-            # Header
-            result_text += f"{'Algorithm':<12} {'Time(ms)':<10} {'Route Time':<12} {'Path Length':<12} {'Status':<10}\n"
-            result_text += f"{'-'*70}\n"
-            
-            best_route_time = float('inf')
-            best_algorithm = None
-            
-            for algorithm, data in sorted_results:
-                status = "✓ Found" if data['found_path'] else "✗ No Path"
-                route_time_str = f"{data['route_time']:.1f}" if data['route_time'] != float('inf') else "∞"
-                
-                result_text += f"{algorithm:<12} {data['execution_time_ms']:<10.3f} "
-                result_text += f"{route_time_str:<12} {data['path_length']:<12} {status:<10}\n"
-                
-                # Track best route
-                if data['found_path'] and data['route_time'] < best_route_time:
-                    best_route_time = data['route_time']
-                    best_algorithm = algorithm
-            
-            result_text += f"\n🏆 ANALYSIS:\n"
-            if best_algorithm:
-                result_text += f"Best Route: {best_algorithm} (Time: {best_route_time:.1f} minutes)\n"
-                
-                # Show fastest execution
-                fastest = sorted_results[0]
-                result_text += f"Fastest Execution: {fastest[0]} ({fastest[1]['execution_time_ms']:.3f}ms)\n"
-                
-                # Algorithm recommendations
-                result_text += f"\n💡 RECOMMENDATIONS:\n"
-                result_text += f"• For speed: Use BFS or DFS for simple paths\n"
-                result_text += f"• For optimal routes: Use Dijkstra or A* Search\n"
-                result_text += f"• A* Search combines optimality with efficiency\n"
-                
-                # Display best path
-                best_path = results[best_algorithm]['path']
-                if best_path:
-                    result_text += f"\n🗺️ OPTIMAL PATH: {' → '.join(best_path)}\n"
-            else:
-                result_text += f"No path found between {start} and {end}\n"
-            
-            result_text += f"\n{'='*70}\n"
-            
-            # Display results
-            self.route_text.config(state=tk.NORMAL)
-            self.route_text.insert(tk.END, result_text)
-            self.route_text.see(tk.END)
-            self.route_text.config(state=tk.DISABLED)
-            
-            self.log_update(f"Compared all algorithms for route {start} to {end}")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Algorithm comparison failed: {str(e)}")
-    
+        results = self.routing.compare_algorithms(start, end)
+        self.route_text.config(state=tk.NORMAL)
+        self.route_text.delete(1.0, tk.END)
+        self.route_text.insert(tk.END, str(results))
+        self.route_text.config(state=tk.DISABLED)
+
     def optimize_routes(self):
-        result = "\nRoute Optimization Results:\n"
-        result += "=" * 50 + "\n"
-        
-        active_deliveries = [(d_id, d) for d_id, d in self.deliveries.items() 
-                           if d.status in ["Assigned", "In Transit"]]
-        
-        if not active_deliveries:
-            result += "No active deliveries to optimize.\n"
-        else:
-            for delivery_id, delivery in active_deliveries:
-                # Find assigned driver
-                assigned_driver = None
-                for driver_id, driver in self.drivers.items():
-                    if delivery_id in driver.assigned_deliveries:
-                        assigned_driver = driver
-                        break
-                
-                if assigned_driver:
-                    try:
-                        path = self.routing.shortest_path(assigned_driver.current_location, 
-                                                        delivery.destination)
-                        if path:
-                            total_time = self.routing.calculate_route_time(path)
-                            result += f"\nDelivery {delivery_id}:\n"
-                            result += f"Driver: {assigned_driver.name} (at {assigned_driver.current_location})\n"
-                            result += f"Destination: {delivery.destination}\n"
-                            result += f"Optimal path: {' -> '.join(path)}\n"
-                            result += f"Estimated time: {total_time} minutes\n"
-                    except:
-                        result += f"\nDelivery {delivery_id}: Route calculation failed\n"
-        
-        result += "\n" + "=" * 50 + "\n"
-        self.route_text.insert(tk.END, result)
-        self.route_text.see(tk.END)
-        self.log_update("Optimized all active delivery routes")
-    
+        self.log_update("Optimizing routes...")
+
     def toggle_tracking(self):
         if self.tracking_active.get():
             self.start_live_tracking()
         else:
             self.stop_live_tracking()
-    
-    def start_live_tracking(self):
-        self.log_update("Live tracking started")
-        self.tracking_thread = threading.Thread(target=self.live_tracking_loop, daemon=True)
-        self.tracking_thread.start()
-    
-    def stop_live_tracking(self):
-        self.log_update("Live tracking stopped")
-    
-    def live_tracking_loop(self):
-        while self.tracking_active.get():
-            # Simulate some updates
-            time.sleep(5)  # Update every 5 seconds
-            if self.tracking_active.get():
-                self.root.after(0, self.simulate_updates)
-    
-    def simulate_updates(self):
-        # Simulate random delivery progress updates
-        import random
-        
-        active_deliveries = [(d_id, d) for d_id, d in self.deliveries.items() 
-                           if d.status in ["Assigned", "In Transit"]]
-        
-        if active_deliveries:
-            delivery_id, delivery = random.choice(active_deliveries)
-            if delivery.progress < 100:
-                progress_increment = random.randint(5, 15)
-                delivery.update_progress(progress_increment)
-                self.refresh_deliveries_display()
-                self.log_update(f"Auto-update: Delivery {delivery_id} progress +{progress_increment}%")
-    
-    def refresh_data(self):
-        self.refresh_all_displays()
-        self.log_update("Data refreshed")
-    
-    def refresh_all_displays(self):
         self.refresh_drivers_display()
         self.refresh_deliveries_display()
-        self.update_statistics()
-    
+        self.update_location_combos()
+        
+    def update_location_combos(self):
+        nodes = sorted(list(self.graph.nodes.keys()))
+        self.start_combo['values'] = nodes
+        self.end_combo['values'] = nodes
+        
     def refresh_drivers_display(self):
         for item in self.drivers_tree.get_children():
             self.drivers_tree.delete(item)
+        for driver in self.drivers.values():
+            self.drivers_tree.insert("", tk.END, values=(driver.driver_id, driver.name, driver.status, driver.current_location, len(driver.assigned_deliveries)))
             
-        for driver_id, driver in self.drivers.items():
-            deliveries_count = len(driver.assigned_deliveries)
-            self.drivers_tree.insert("", tk.END, values=(
-                driver_id, driver.name, driver.status, 
-                driver.current_location, deliveries_count
-            ))
-    
     def refresh_deliveries_display(self):
         for item in self.deliveries_tree.get_children():
             self.deliveries_tree.delete(item)
-            
-        for delivery_id, delivery in self.deliveries.items():
-            # Find assigned driver
-            assigned_driver = "None"
-            for driver_id, driver in self.drivers.items():
-                if delivery_id in driver.assigned_deliveries:
-                    assigned_driver = driver.name
+        for delivery in self.deliveries.values():
+            driver_name = "None"
+            for d in self.drivers.values():
+                if delivery.delivery_id in d.assigned_deliveries:
+                    driver_name = d.name
                     break
-            
-            self.deliveries_tree.insert("", tk.END, values=(
-                delivery_id, delivery.destination, delivery.status,
-                f"{delivery.progress}%", assigned_driver,
-                datetime.now().strftime("%H:%M")
-            ))
-    
-    # Cuisine Time Adjustment Methods
-    def search_dishes_simple(self):
-        """Search for dishes based on search query"""
-        query = self.dish_search_var.get()
-        if not query:
-            # If no query, show all dishes
-            try:
-                all_dishes = self.cuisine_calculator.get_all_dishes()
-                self.dish_combo['values'] = all_dishes
-                self.dish_info_text.config(state=tk.NORMAL)
-                self.dish_info_text.delete(1.0, tk.END)
-                self.dish_info_text.insert(tk.END, f"📋 ALL AVAILABLE DISHES\n\n" +
-                                                  f"Loaded {len(all_dishes)} dishes from database.\n" +
-                                                  f"Use the dropdown below to select any dish for detailed information.\n\n" +
-                                                  f"💡 Tip: You can also use the search box or quick filter buttons!")
-                self.dish_info_text.config(state=tk.DISABLED)
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to load dishes: {e}")
-            return
-        
-        try:
-            matching_dishes = self.cuisine_calculator.search_dishes(query)
-            
-            if not matching_dishes:
-                self.dish_info_text.config(state=tk.NORMAL)
-                self.dish_info_text.delete(1.0, tk.END)
-                self.dish_info_text.insert(tk.END, f"❌ NO RESULTS\n\nNo dishes found matching '{query}'\n\n" +
-                                                  f"Try searching for:\n• Dish names (e.g., 'pizza', 'burger')\n" +
-                                                  f"• Cuisines (e.g., 'italian', 'asian')\n" +
-                                                  f"• Categories (e.g., 'dessert', 'appetizer')")
-                self.dish_info_text.config(state=tk.DISABLED)
-                self.dish_combo['values'] = []
-                return
-            
-            # Update dropdown with search results
-            dish_names = [dish['dish'] for dish in matching_dishes]
-            self.dish_combo['values'] = dish_names
-            
-            # Display search results
-            self.dish_info_text.config(state=tk.NORMAL)
-            self.dish_info_text.delete(1.0, tk.END)
-            search_info = f"🔍 SEARCH RESULTS: '{query}'\n\n"
-            search_info += f"Found {len(matching_dishes)} matching dishes:\n\n"
-            
-            for dish in matching_dishes[:10]:  # Show first 10 results
-                search_info += f"• {dish['dish']} ({dish['cuisine']})\n"
-                search_info += f"  Prep: {dish['base_prep_time']}min, Multiplier: {dish['time_multiplier']:.2f}x\n\n"
-            
-            if len(matching_dishes) > 10:
-                search_info += f"... and {len(matching_dishes) - 10} more dishes.\n"
-            
-            search_info += "\nSelect any dish from the dropdown for detailed information!"
-            
-            self.dish_info_text.insert(tk.END, search_info)
-            self.dish_info_text.config(state=tk.DISABLED)
-        
-        except Exception as e:
-            messagebox.showerror("Error", f"Search failed: {e}")
-    
-    def calculate_delivery_time_simple(self):
-        """Calculate total delivery time including cuisine adjustments"""
-        start = self.start_var.get()
-        end = self.end_var.get()
-        selected_dish = self.selected_dish_var.get()
-        
-        if not start or not end:
-            messagebox.showwarning("Warning", "Please select start and end locations")
-            return
-        
-        if not selected_dish:
-            messagebox.showwarning("Warning", "Please select a dish")
-            return
-        
-        if start not in self.graph.nodes or end not in self.graph.nodes:
-            messagebox.showerror("Error", "Invalid start or end location")
-            return
-        
-        try:
-            # Find the shortest path for travel time calculation
-            path = self.routing.shortest_path(start, end)
-            
-            if not path:
-                messagebox.showwarning("Warning", f"No route found from {start} to {end}")
-                return
-            
-            # Calculate base travel time
-            base_travel_time = self.routing.calculate_route_time(path)
-            
-            # Calculate adjusted delivery time using cuisine calculator
-            total_time, details = self.cuisine_calculator.calculate_adjusted_delivery_time(
-                base_travel_time, selected_dish
-            )
-            
-            # Create detailed results display
-            result = f"\n{'='*60}\n"
-            result += f"DELIVERY TIME CALCULATION\n"
-            result += f"{'='*60}\n\n"
-            
-            result += f"Route: {start} → {end}\n"
-            result += f"Path: {' → '.join(path)}\n"
-            result += f"Distance: {len(path)-1} segments\n\n"
-            
-            result += f"DISH INFORMATION:\n"
-            result += f"Dish: {details['dish']}\n"
-            if details['found']:
-                result += f"Cuisine: {details['cuisine']}\n"
-                result += f"Category: {details['category']}\n\n"
-                
-                result += f"TIME BREAKDOWN:\n"
-                result += f"Base Travel Time: {details['base_travel_time']:.1f} minutes\n"
-                result += f"Preparation Time: {details['prep_time']:.1f} minutes\n"
-                result += f"Time Multiplier: {details['time_multiplier']:.2f}x\n"
-                result += f"Adjusted Travel Time: {details['adjusted_travel_time']:.1f} minutes\n"
-                result += f"TOTAL DELIVERY TIME: {details['total_time']:.1f} minutes\n\n"
-            else:
-                result += f"Cuisine: Unknown (dish not found in database)\n"
-                result += f"Using default calculation\n\n"
-                result += f"TOTAL DELIVERY TIME: {total_time:.1f} minutes\n\n"
-            
-            result += f"{'='*60}\n"
-            
-            # Display in route results
-            self.route_text.config(state=tk.NORMAL)
-            self.route_text.insert(tk.END, result)
-            self.route_text.see(tk.END)
-            self.route_text.config(state=tk.DISABLED)
-            
-            # Also update dish info display with calculation results
-            self.dish_info_text.config(state=tk.NORMAL)
-            self.dish_info_text.delete(1.0, tk.END)
-            
-            summary = f"✅ CALCULATION COMPLETE!\n\n"
-            summary += f"🗺️ Route: {start} → {end}\n"
-            summary += f"🍽️ Dish: {selected_dish}\n"
-            summary += f"⏱️ Total Time: {total_time:.1f} minutes\n\n"
-            
-            if details['found']:
-                summary += f"📊 Time Breakdown:\n"
-                summary += f"  • Preparation: {details['prep_time']:.1f} min\n"
-                summary += f"  • Base Travel: {details['base_travel_time']:.1f} min\n"
-                summary += f"  • Adjusted Travel: {details['adjusted_travel_time']:.1f} min\n"
-                summary += f"  • Cuisine Multiplier: {details['time_multiplier']:.2f}x\n\n"
-                
-                time_saved = details['base_travel_time'] - details['adjusted_travel_time']
-                if time_saved > 0:
-                    summary += f"💡 Time Optimized: {time_saved:.1f} min saved!\n"
-                elif time_saved < -1:
-                    summary += f"⚠️ Complex Delivery: {abs(time_saved):.1f} min extra needed\n"
-                
-            summary += f"\n📋 Check 'Route Analysis & Results' for full details!"
-            
-            self.dish_info_text.insert(tk.END, summary)
-            self.dish_info_text.config(state=tk.DISABLED)
-            
-            self.log_update(f"Calculated delivery time for {selected_dish}: {total_time:.1f} minutes")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Delivery time calculation failed: {str(e)}")
-            import traceback
-            traceback.print_exc()
-    
-    def filter_by_cuisine(self, cuisine_type):
-        """Filter dishes by cuisine type using quick filter buttons"""
-        try:
-            if cuisine_type == "Dessert":
-                # Filter by category for desserts
-                matching_dishes = [dish for dish in self.cuisine_calculator.search_dishes("dessert") 
-                                 if "dessert" in dish.get('category', '').lower()]
-            else:
-                # Filter by cuisine
-                dishes = self.cuisine_calculator.get_dishes_by_cuisine(cuisine_type)
-                matching_dishes = [{'dish': dish} for dish in dishes]
-            
-            if matching_dishes:
-                dish_names = [dish['dish'] for dish in matching_dishes]
-                self.dish_combo['values'] = dish_names
-                
-                # Update search field and info
-                self.dish_search_var.set(cuisine_type)
-                self.dish_info_text.config(state=tk.NORMAL)
-                self.dish_info_text.delete(1.0, tk.END)
-                
-                info_text = f"🔎 FILTERED BY: {cuisine_type.upper()}\n\n"
-                info_text += f"Found {len(matching_dishes)} dishes:\n\n"
-                
-                for dish in matching_dishes[:8]:  # Show first 8
-                    dish_info = self.cuisine_calculator.get_dish_info(dish['dish'])
-                    if dish_info:
-                        info_text += f"• {dish_info['dish']}\n"
-                        info_text += f"  Prep: {dish_info['base_prep_time']}min, "
-                        info_text += f"Multiplier: {dish_info['time_multiplier']:.2f}x\n\n"
-                
-                if len(matching_dishes) > 8:
-                    info_text += f"... and {len(matching_dishes) - 8} more dishes.\n"
-                
-                info_text += "\nSelect a dish from the dropdown to see full details!"
-                
-                self.dish_info_text.insert(tk.END, info_text)
-                self.dish_info_text.config(state=tk.DISABLED)
-            else:
-                self.dish_combo['values'] = []
-                self.dish_info_text.config(state=tk.NORMAL)
-                self.dish_info_text.delete(1.0, tk.END)
-                self.dish_info_text.insert(tk.END, f"No dishes found for {cuisine_type}")
-                self.dish_info_text.config(state=tk.DISABLED)
-                
-        except Exception as e:
-            messagebox.showerror("Filter Error", f"Failed to filter by {cuisine_type}: {e}")
-    
-    def on_dish_selected_simple(self, event=None):
-        """Handle dish selection from dropdown"""
-        selected_dish = self.selected_dish_var.get()
-        if not selected_dish:
-            return
-        
-        try:
-            dish_info = self.cuisine_calculator.get_dish_info(selected_dish)
-            
-            self.dish_info_text.config(state=tk.NORMAL)
-            self.dish_info_text.delete(1.0, tk.END)
-            
-            if dish_info:
-                info_text = f"🍽️ SELECTED: {dish_info['dish']}\n\n"
-                info_text += f"📍 Details:\n"
-                info_text += f"  • Cuisine: {dish_info['cuisine']}\n"
-                info_text += f"  • Category: {dish_info['category']}\n"
-                info_text += f"  • Prep Time: {dish_info['base_prep_time']} minutes\n"
-                info_text += f"  • Time Multiplier: {dish_info['time_multiplier']:.2f}x\n\n"
-                info_text += f"🔍 Multiplier Analysis:\n"
-                if dish_info['time_multiplier'] > 1.2:
-                    info_text += f"  High complexity delivery (>{dish_info['time_multiplier']:.2f}x)\n"
-                elif dish_info['time_multiplier'] < 0.9:
-                    info_text += f"  Fast delivery item (<{dish_info['time_multiplier']:.2f}x)\n"
-                else:
-                    info_text += f"  Standard delivery time (~{dish_info['time_multiplier']:.2f}x)\n"
-                info_text += f"  • Considers packaging requirements\n"
-                info_text += f"  • Temperature sensitivity factors\n"
-                info_text += f"  • Historical delivery patterns\n\n"
-                info_text += f"✅ Ready for smart route calculation!\n"
-                info_text += f"Select locations and click 'Calculate Smart Delivery Time'"
-                
-                self.dish_info_text.insert(tk.END, info_text)
-            else:
-                self.dish_info_text.insert(tk.END, f"❌ ERROR\n\nNo information found for dish: {selected_dish}")
-            
-            self.dish_info_text.config(state=tk.DISABLED)
-        
-        except Exception as e:
-            self.dish_info_text.config(state=tk.NORMAL)
-            self.dish_info_text.delete(1.0, tk.END)
-            self.dish_info_text.insert(tk.END, f"❌ ERROR\n\nFailed to load dish information: {e}")
-            self.dish_info_text.config(state=tk.DISABLED)
-    
-    def update_statistics(self):
-        total_drivers = len(self.drivers)
-        active_deliveries = len([d for d in self.deliveries.values() 
-                               if d.status in ["Assigned", "In Transit"]])
-        completed_deliveries = len([d for d in self.deliveries.values() 
-                                  if d.status == "Completed"])
-        
-        self.total_drivers_label.config(text=f"Total Drivers: {total_drivers}")
-        self.active_deliveries_label.config(text=f"Active Deliveries: {active_deliveries}")
-        self.completed_deliveries_label.config(text=f"Completed: {completed_deliveries}")
-    
-    def update_location_combos(self):
-        nodes = list(self.graph.nodes.keys())
-        self.start_combo['values'] = nodes
-        self.end_combo['values'] = nodes
-    
+            self.deliveries_tree.insert("", tk.END, values=(delivery.delivery_id, delivery.destination, delivery.status, f"{delivery.progress}%", driver_name, "Now"))
+
     def log_update(self, message):
         timestamp = datetime.now().strftime("%H:%M:%S")
-        log_entry = f"[{timestamp}] {message}\n"
-        self.updates_text.insert(tk.END, log_entry)
+        self.updates_text.insert(tk.END, f"[{timestamp}] {message}\n")
         self.updates_text.see(tk.END)
-    
-    def clear_log(self):
-        self.updates_text.delete(1.0, tk.END)
-        self.log_update("Log cleared")
-    
-    def open_image_map_creator(self):
-        """Open the image-based map creator"""
-        try:
-            create_image_map(parent_gui=self)
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not open image map creator: {str(e)}")
-    
-    def show_real_scale_view(self):
-        """Show graph with real proportional distances"""
-        if not self.graph.nodes:
-            messagebox.showwarning("Warning", "No graph to display")
-            return
-        
-        # Create new window for real scale view
-        scale_window = tk.Toplevel(self.root)
-        scale_window.title("Real Scale Proportional View")
-        scale_window.geometry("1000x700")
-        
-        # Create canvas
-        canvas = tk.Canvas(scale_window, bg='white')
-        canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Calculate proportional positions
-        self.draw_proportional_graph(canvas)
 
-    def draw_proportional_graph(self, canvas):
-        """Draw graph with real proportional distances"""
-        if not self.graph.nodes:
-            return
-        
-        # Get all nodes and their positions
-        nodes = list(self.graph.nodes.items())
-        if len(nodes) < 2:
-            canvas.create_text(500, 350, text="Need at least 2 nodes for proportional view", 
-                             font=("Arial", 16), fill="red")
-            return
-        
-        # Calculate distances between all node pairs
-        distances = {}
-        for i, (node1, data1) in enumerate(nodes):
-            for j, (node2, data2) in enumerate(nodes):
-                if i < j:
-                    # Use graph edge weight as real distance, or calculate from coordinates
-                    if node1 in self.graph.edges and node2 in self.graph.edges[node1]:
-                        real_distance = self.graph.edges[node1][node2]
-                    else:
-                        # Fallback to coordinate distance (scaled down)
-                        dx = data1["x"] - data2["x"]
-                        dy = data1["y"] - data2["y"]
-                        real_distance = (dx*dx + dy*dy) ** 0.5 / 10  # Scale down
-                    
-                    distances[(node1, node2)] = real_distance
-        
-        if not distances:
-            canvas.create_text(500, 350, text="No connections found", 
-                             font=("Arial", 16), fill="red")
-            return
-        
-        # Use multidimensional scaling (simplified version)
-        # Start with first node at center
-        positions = {}
-        first_node = nodes[0][0]
-        positions[first_node] = (500, 350)  # Center of canvas
-        
-        # Place second node
-        if len(nodes) > 1:
-            second_node = nodes[1][0]
-            distance_key = (first_node, second_node) if (first_node, second_node) in distances else (second_node, first_node)
-            if distance_key in distances:
-                scale_factor = 3  # Pixels per distance unit
-                dist = distances[distance_key] * scale_factor
-                positions[second_node] = (500 + dist, 350)
-            else:
-                positions[second_node] = (600, 350)
-        
-        # Place remaining nodes using triangulation (simplified)
-        for node, _ in nodes[2:]:
-            # Find best position based on distances to already placed nodes
-            best_pos = None
-            min_error = float('inf')
-            
-            # Try multiple positions and find the one with minimum distance error
-            for test_x in range(100, 900, 50):
-                for test_y in range(100, 600, 50):
-                    error = 0
-                    valid = True
-                    
-                    for placed_node, (px, py) in positions.items():
-                        distance_key = (node, placed_node) if (node, placed_node) in distances else (placed_node, node)
-                        if distance_key in distances:
-                            expected_dist = distances[distance_key] * 3  # Same scale factor
-                            actual_dist = ((test_x - px)**2 + (test_y - py)**2) ** 0.5
-                            error += abs(expected_dist - actual_dist)
-                        else:
-                            valid = False
-                            break
-                    
-                    if valid and error < min_error:
-                        min_error = error
-                        best_pos = (test_x, test_y)
-            
-            if best_pos:
-                positions[node] = best_pos
-            else:
-                # Fallback position
-                angle = len(positions) * 60  # Degrees
-                radius = 100
-                import math
-                x = 500 + radius * math.cos(math.radians(angle))
-                y = 350 + radius * math.sin(math.radians(angle))
-                positions[node] = (x, y)
-        
-        # Draw edges with proportional lengths
-        for (node1, node2), distance in distances.items():
-            if node1 in positions and node2 in positions:
-                x1, y1 = positions[node1]
-                x2, y2 = positions[node2]
-                
-                # Calculate actual displayed distance
-                actual_distance = ((x2-x1)**2 + (y2-y1)**2) ** 0.5
-                
-                # Draw edge
-                canvas.create_line(x1, y1, x2, y2, width=2, fill="blue")
-                
-                # Draw distance label
-                mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
-                canvas.create_text(mid_x, mid_y, text=f"{distance:.1f}", 
-                                 fill="red", font=("Arial", 8))
-        
-        # Draw nodes
-        for node, (x, y) in positions.items():
-            # Draw circle
-            canvas.create_oval(x-15, y-15, x+15, y+15, 
-                             fill="yellow", outline="black", width=2)
-            # Draw label
-            canvas.create_text(x, y, text=node, font=("Arial", 10, "bold"))
-        
-        # Add title and legend
-        canvas.create_text(500, 30, text="Real Scale Proportional View", 
-                         font=("Arial", 16, "bold"))
-        canvas.create_text(500, 50, text="Distances shown are proportional to real travel times/distances", 
-                         font=("Arial", 10), fill="gray")
-        
-
-class CoordinateDialog:
-    def __init__(self, parent, existing_nodes):
-        self.result = None
-        
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title("Add Intersection")
-        self.dialog.geometry("400x300")
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
-        
-        # Center the dialog
-        self.dialog.geometry("+%d+%d" % (parent.winfo_rootx() + 50, parent.winfo_rooty() + 50))
-        
-        # Create form
-        frame = ttk.Frame(self.dialog)
-        frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Node ID
-        ttk.Label(frame, text="Intersection ID:").grid(row=0, column=0, sticky="w", pady=5)
-        self.id_var = tk.StringVar()
-        ttk.Entry(frame, textvariable=self.id_var, width=20).grid(row=0, column=1, pady=5)
-        
-        # Coordinates
-        ttk.Label(frame, text="X Coordinate:").grid(row=1, column=0, sticky="w", pady=5)
-        self.x_var = tk.IntVar(value=200)
-        x_spinbox = tk.Spinbox(frame, from_=0, to=1000, increment=50, textvariable=self.x_var, width=18)
-        x_spinbox.grid(row=1, column=1, pady=5)
-        
-        ttk.Label(frame, text="Y Coordinate:").grid(row=2, column=0, sticky="w", pady=5)
-        self.y_var = tk.IntVar(value=200)
-        y_spinbox = tk.Spinbox(frame, from_=0, to=800, increment=50, textvariable=self.y_var, width=18)
-        y_spinbox.grid(row=2, column=1, pady=5)
-        
-        # Quick coordinate buttons
-        ttk.Label(frame, text="Quick Coordinates:").grid(row=3, column=0, sticky="w", pady=10)
-        
-        coord_frame = ttk.Frame(frame)
-        coord_frame.grid(row=4, column=0, columnspan=2, pady=5)
-        
-        quick_coords = [
-            ("Top-Left", 100, 100), ("Top-Center", 400, 100), ("Top-Right", 700, 100),
-            ("Center", 400, 300), ("Bottom", 400, 500)
-        ]
-        
-        for i, (name, x, y) in enumerate(quick_coords):
-            ttk.Button(coord_frame, text=f"{name}\n({x},{y})", 
-                      command=lambda x=x, y=y: self.set_coords(x, y)).grid(row=i//3, column=i%3, padx=2, pady=2)
-        
-        # Buttons
-        button_frame = ttk.Frame(frame)
-        button_frame.grid(row=5, column=0, columnspan=2, pady=20)
-        
-        ttk.Button(button_frame, text="OK", command=self.ok_clicked).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=self.dialog.destroy).pack(side=tk.LEFT, padx=5)
-        
-        # Focus on ID entry
-        self.dialog.after(100, lambda: self.id_var and self.dialog.focus_set())
-        
-        self.dialog.wait_window()
-    
-    def set_coords(self, x, y):
-        self.x_var.set(x)
-        self.y_var.set(y)
-    
-    def ok_clicked(self):
-        node_id = self.id_var.get().strip()
-        if node_id:
-            self.result = (node_id, self.x_var.get(), self.y_var.get())
-            self.dialog.destroy()
-
-
-class RoadDialog:
-    def __init__(self, parent, nodes):
-        self.result = None
-        
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title("Add Road")
-        self.dialog.geometry("300x200")
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
-        
-        # Center the dialog
-        self.dialog.geometry("+%d+%d" % (parent.winfo_rootx() + 50, parent.winfo_rooty() + 50))
-        
-        # Create form
-        frame = ttk.Frame(self.dialog)
-        frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Start node
-        ttk.Label(frame, text="Start Intersection:").grid(row=0, column=0, sticky="w", pady=5)
-        self.start_var = tk.StringVar()
-        start_combo = ttk.Combobox(frame, textvariable=self.start_var, values=nodes, width=18)
-        start_combo.grid(row=0, column=1, pady=5)
-        
-        # End node
-        ttk.Label(frame, text="End Intersection:").grid(row=1, column=0, sticky="w", pady=5)
-        self.end_var = tk.StringVar()
-        end_combo = ttk.Combobox(frame, textvariable=self.end_var, values=nodes, width=18)
-        end_combo.grid(row=1, column=1, pady=5)
-        
-        # Weight
-        ttk.Label(frame, text="Travel Time (min):").grid(row=2, column=0, sticky="w", pady=5)
-        self.weight_var = tk.DoubleVar(value=5.0)
-        weight_spinbox = tk.Spinbox(frame, from_=0.1, to=60.0, increment=0.5, 
-                                   textvariable=self.weight_var, width=18)
-        weight_spinbox.grid(row=2, column=1, pady=5)
-        
-        # Buttons
-        button_frame = ttk.Frame(frame)
-        button_frame.grid(row=3, column=0, columnspan=2, pady=20)
-        
-        ttk.Button(button_frame, text="OK", command=self.ok_clicked).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=self.dialog.destroy).pack(side=tk.LEFT, padx=5)
-        
-        self.dialog.wait_window()
-    
-    def ok_clicked(self):
-        start = self.start_var.get()
-        end = self.end_var.get()
-        weight = self.weight_var.get()
-        
-        if start and end and start != end:
-            self.result = (start, end, weight)
-            self.dialog.destroy()
-    
-    # Cuisine Time Adjustment Methods
-    def on_dish_search(self, event=None):
-        """Handle real-time search as user types"""
-        query = self.dish_search_var.get()
-        if len(query) >= 2:  # Start searching after 2 characters
-            matching_dishes = self.cuisine_calculator.search_dishes(query)
-            dish_names = [dish['dish'] for dish in matching_dishes[:20]]  # Limit to 20 results
-            self.dish_combo['values'] = dish_names
-            if dish_names:
-                self.dish_combo.set('')  # Clear selection to show search results
-    
-    def search_dishes(self):
-        """Search for dishes based on search query"""
+    def search_dishes_simple(self):
         query = self.dish_search_var.get()
         if not query:
-            # If no query, show all dishes
-            all_dishes = self.cuisine_calculator.get_all_dishes()
-            self.dish_combo['values'] = all_dishes
-            self.dish_info_text.delete(1.0, tk.END)
-            self.dish_info_text.insert(tk.END, f"Showing all {len(all_dishes)} available dishes.\nSelect a dish from the dropdown to see details.")
+            # Show all dishes if empty
+            dishes = self.cuisine_calculator.get_all_dishes()
+            self.dish_combo['values'] = dishes
             return
+
+        # Smart Search with Fuzzy Matching
+        import difflib
+        all_dishes = self.cuisine_calculator.get_all_dishes()
         
-        matching_dishes = self.cuisine_calculator.search_dishes(query)
+        # 1. Exact/Substring match (High priority)
+        matches = [d for d in all_dishes if query.lower() in d.lower()]
         
-        if not matching_dishes:
-            self.dish_info_text.delete(1.0, tk.END)
-            self.dish_info_text.insert(tk.END, f"No dishes found matching '{query}'")
-            self.dish_combo['values'] = []
-            return
+        # 2. Fuzzy match (typos)
+        fuzzy_matches = difflib.get_close_matches(query, all_dishes, n=5, cutoff=0.6)
         
-        # Update dropdown with search results
-        dish_names = [dish['dish'] for dish in matching_dishes]
-        self.dish_combo['values'] = dish_names
+        # Combine and deduplicate, preserving order
+        results = []
+        seen = set()
         
-        # Display search results
-        self.dish_info_text.delete(1.0, tk.END)
-        search_info = f"Found {len(matching_dishes)} dishes matching '{query}':\n\n"
+        for d in matches + fuzzy_matches:
+            if d not in seen:
+                results.append(d)
+                seen.add(d)
         
-        for dish in matching_dishes[:10]:  # Show first 10 results
-            search_info += f"• {dish['dish']} ({dish['cuisine']})\n"
-            search_info += f"  Prep Time: {dish['base_prep_time']} min, Multiplier: {dish['time_multiplier']:.2f}\n\n"
-        
-        if len(matching_dishes) > 10:
-            search_info += f"... and {len(matching_dishes) - 10} more dishes.\n"
-        
-        self.dish_info_text.insert(tk.END, search_info)
-    
-    def on_dish_selected(self, event=None):
-        """Handle dish selection from dropdown"""
-        selected_dish = self.selected_dish_var.get()
-        if not selected_dish:
-            return
-        
-        dish_info = self.cuisine_calculator.get_dish_info(selected_dish)
-        
-        if dish_info:
-            info_text = f"Selected Dish: {dish_info['dish']}\n\n"
-            info_text += f"Cuisine: {dish_info['cuisine']}\n"
-            info_text += f"Category: {dish_info['category']}\n"
-            info_text += f"Base Preparation Time: {dish_info['base_prep_time']} minutes\n"
-            info_text += f"Time Multiplier: {dish_info['time_multiplier']:.2f}\n\n"
-            info_text += "This multiplier adjusts travel time based on:\n"
-            info_text += "• Dish complexity and packaging requirements\n"
-            info_text += "• Temperature sensitivity\n"
-            info_text += "• Traffic patterns for this cuisine type\n"
-            info_text += "• Historical delivery data\n\n"
-            info_text += "Select start/end locations and click 'Calculate Time' for delivery estimate."
+        if not results:
+            self.dish_combo['values'] = ["No matches found"]
+        else:
+            # Add rich info to dropdown values (optional, or just keep names)
+            # For now, just names to keep selection simple
+            self.dish_combo['values'] = results
             
+            # Auto-select first match if exact
+            if len(results) > 0 and results[0].lower() == query.lower():
+                self.dish_combo.set(results[0])
+                self.on_dish_selected_simple(None)
+
+    def on_dish_selected_simple(self, event):
+        dish = self.selected_dish_var.get()
+        info = self.cuisine_calculator.get_dish_info(dish)
+        if info:
+            self.dish_info_text.config(state=tk.NORMAL)
             self.dish_info_text.delete(1.0, tk.END)
-            self.dish_info_text.insert(tk.END, info_text)
-    
-    def calculate_delivery_time(self):
-        """Calculate total delivery time including cuisine adjustments"""
+            
+            # Rich Display
+            display_text = f"""DISH DETAILS
+--------------------------------
+Name:      {info['dish']}
+Cuisine:   {info['cuisine']}
+Category:  {info['category']}
+Prep Time: {info['base_prep_time']} min
+"""
+            self.dish_info_text.insert(tk.END, display_text)
+            self.dish_info_text.config(state=tk.DISABLED)
+
+    def filter_by_cuisine(self, cuisine):
+        dishes = self.cuisine_calculator.get_dishes_by_cuisine(cuisine)
+        self.dish_combo['values'] = dishes
+
         start = self.start_var.get()
         end = self.end_var.get()
-        selected_dish = self.selected_dish_var.get()
+        dish = self.selected_dish_var.get()
         
-        if not start or not end:
-            messagebox.showwarning("Warning", "Please select start and end locations")
+        if not start or not end or not dish:
+            messagebox.showwarning("Missing Information", "Please select start, end, and a dish.")
             return
-        
-        if not selected_dish:
-            messagebox.showwarning("Warning", "Please select a dish")
-            return
-        
-        if start not in self.graph.nodes or end not in self.graph.nodes:
-            messagebox.showerror("Error", "Invalid start or end location")
-            return
-        
-        try:
-            # Find the shortest path for travel time calculation
-            path = self.routing.shortest_path(start, end)
-            
-            if not path:
-                messagebox.showwarning("Warning", f"No route found from {start} to {end}")
-                return
-            
-            # Calculate base travel time
-            base_travel_time = self.routing.calculate_route_time(path)
-            
-            # Get detailed route weights for breakdown
-            route_weights = []
-            for i in range(len(path) - 1):
-                current = path[i]
-                next_node = path[i + 1]
-                weight = self.graph.get_edge_weight(current, next_node)
-                if weight is not None:
-                    route_weights.append(weight)
-            
-            # Calculate adjusted delivery time
-            total_time, details = self.cuisine_calculator.calculate_adjusted_delivery_time(
-                base_travel_time, selected_dish
-            )
-            
-            # Create detailed results display
-            result = f"\n{'='*60}\n"
-            result += f"DELIVERY TIME CALCULATION\n"
-            result += f"{'='*60}\n\n"
-            
-            result += f"Route: {start} → {end}\n"
-            result += f"Path: {' → '.join(path)}\n"
-            result += f"Distance: {len(path)-1} segments\n\n"
-            
-            result += f"DISH INFORMATION:\n"
-            result += f"Dish: {details['dish']}\n"
-            result += f"Cuisine: {details['cuisine']}\n"
-            result += f"Category: {details['category']}\n\n"
-            
-            result += f"TIME BREAKDOWN:\n"
-            result += f"Base Travel Time: {details['base_travel_time']:.1f} minutes\n"
-            result += f"Preparation Time: {details['prep_time']:.1f} minutes\n"
-            result += f"Time Multiplier: {details['time_multiplier']:.2f}x\n"
-            result += f"Adjusted Travel Time: {details['adjusted_travel_time']:.1f} minutes\n"
-            result += f"TOTAL DELIVERY TIME: {details['total_time']:.1f} minutes\n\n"
-            
-            result += f"ROUTE SEGMENTS:\n"
-            for i, weight in enumerate(route_weights):
-                result += f"  {path[i]} → {path[i+1]}: {weight} min\n"
-            
-            result += f"\n{'='*60}\n"
-            
-            # Display in route results
-            self.route_text.insert(tk.END, result)
-            self.route_text.see(tk.END)
-            
-            # Also update dish info display with calculation results
-            summary = f"DELIVERY TIME CALCULATED!\n\n"
-            summary += f"Route: {start} → {end}\n"
-            summary += f"Dish: {selected_dish}\n"
-            summary += f"Total Time: {total_time:.1f} minutes\n\n"
-            summary += f"Breakdown:\n"
-            summary += f"• Preparation: {details['prep_time']:.1f} min\n"
-            summary += f"• Travel (base): {details['base_travel_time']:.1f} min\n"
-            summary += f"• Travel (adjusted): {details['adjusted_travel_time']:.1f} min\n"
-            summary += f"• Time multiplier: {details['time_multiplier']:.2f}x\n\n"
-            summary += "Full details added to Route Results above."
-            
-            self.dish_info_text.delete(1.0, tk.END)
-            self.dish_info_text.insert(tk.END, summary)
-            
-            self.log_update(f"Calculated delivery time for {selected_dish}: {total_time:.1f} minutes")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Delivery time calculation failed: {str(e)}")
 
+        # Get route
+        path = self.routing.a_star_search(start, end)
+        if not path:
+            self.route_text.config(state=tk.NORMAL)
+            self.route_text.delete(1.0, tk.END)
+            self.route_text.insert(tk.END, "No path found between selected locations.")
+            self.route_text.config(state=tk.DISABLED)
+            return
+
+        # Calculate base metrics
+        base_travel_time = self.routing.calculate_route_time(path)
+        distance = base_travel_time * 0.5 # Approximation for demo
+        
+        dish_info = self.cuisine_calculator.get_dish_info(dish)
+        if not dish_info:
+            dish_info = {'base_prep_time': 15, 'cuisine': 'Unknown'} # Default
+            
+        # AI Prediction
+        predicted_time = self.time_predictor.predict(
+            dish_info['cuisine'], 
+            dish_info['base_prep_time'], 
+            distance
+        )
+        
+        # Display results
+        self.route_text.config(state=tk.NORMAL)
+        self.route_text.delete(1.0, tk.END)
+        
+        result = f"""AI DELIVERY PREDICTION
+        
+Dish: {dish} ({dish_info['cuisine']})
+Route: {' -> '.join(path)}
+
+Time Breakdown:
+------------------
+Base Prep Time:    {dish_info['base_prep_time']} min
+Travel Distance:   {distance:.1f} km
+Traffic Factor:    1.2x (Simulated)
+
+AI Predicted Total Time: {predicted_time:.1f} min
+(vs Standard Estimate: {dish_info['base_prep_time'] + base_travel_time:.1f} min)
+
+Confidence: High (Random Forest Model)
+"""
+        self.route_text.insert(tk.END, result)
+        self.route_text.config(state=tk.DISABLED)
+
+    def update_distance_display(self, *args):
+        dist = self.distance_var.get()
+        if dist > 0:
+            self.distance_display_var.set(f"Real-World Distance: {dist:.2f} km")
+        else:
+            self.distance_display_var.set("Real-World Distance: Not Set")
+
+    def import_osm_route(self, distance, time_min, geometry=None):
+        """Import route data from OSM and visualize it on the graph"""
+        # Update data variables
+        self.distance_var.set(float(distance))
+        
+        # Clear existing graph to show just this route
+        self.graph = Graph()
+        self.drivers = {}
+        self.deliveries = {}
+        
+        if not geometry or len(geometry) < 2:
+            # Fallback to simple start/end
+            start_node = "OSM_Start"
+            end_node = "OSM_End"
+            self.graph.add_node(start_node, {'x': 200, 'y': 400})
+            self.graph.add_node(end_node, {'x': 800, 'y': 400})
+            self.graph.add_edge(start_node, end_node, weight=round(distance, 2))
+        else:
+            # Visualize the full path
+            # Normalize coordinates to fit canvas (approx 1000x800)
+            lats = [p[0] for p in geometry]
+            lons = [p[1] for p in geometry]
+            
+            min_lat, max_lat = min(lats), max(lats)
+            min_lon, max_lon = min(lons), max(lons)
+            
+            lat_range = max_lat - min_lat if max_lat != min_lat else 1
+            lon_range = max_lon - min_lon if max_lon != min_lon else 1
+            
+            # Scale to canvas with padding
+            padding = 50
+            width = 1000 - 2 * padding
+            height = 700 - 2 * padding
+            
+            # Downsample to reduce node count (User requested optimization)
+            # Target approx 15 nodes for a cleaner look
+            target_nodes = 15
+            step = max(1, len(geometry) // target_nodes) 
+            points = geometry[::step]
+            if points[-1] != geometry[-1]:
+                points.append(geometry[-1])
+                
+            prev_node = None
+            
+            for i, (lat, lon) in enumerate(points):
+                node_id = f"R{i}"
+                if i == 0: node_id = "Start"
+                if i == len(points)-1: node_id = "End"
+                
+                # Simple projection
+                x = padding + ((lon - min_lon) / lon_range) * width
+                y = height + padding - ((lat - min_lat) / lat_range) * height # Invert Y for screen coords
+                
+                self.graph.add_node(node_id, {'x': int(x), 'y': int(y)})
+                
+                if prev_node:
+                    # Calculate segment distance (approx)
+                    self.graph.add_edge(prev_node, node_id, weight=distance/len(points))
+                
+                prev_node = node_id
+        
+        # Refresh display
+        self.refresh_all_displays()
+        self.log_update(f"Imported OSM Route: {distance:.2f} km, ~{time_min:.0f} min")
+        
+        # Switch to Map tab to show the result
+        self.notebook.select(0) 
+
+    def calculate_delivery_time_ai(self):
+        """Calculate delivery time using AI model"""
+        dish = self.selected_dish_var.get()
+        
+        if not dish:
+            messagebox.showwarning("Missing Information", "Please select a dish.")
+            return
+
+        # Check for real-world distance first
+        real_dist = self.distance_var.get()
+        path = []
+        
+        if real_dist > 0:
+            distance = real_dist
+            # Estimate travel time (assuming 30km/h city speed)
+            base_travel_time = (distance / 30) * 60 
+            route_desc = "Real-World Route (OSM)"
+        else:
+            # Fallback to graph routing
+            start = self.start_var.get()
+            end = self.end_var.get()
+            
+            if not start or not end:
+                messagebox.showwarning("Missing Information", "Please select start and end locations (or use Real-Time Map).")
+                return
+
+            path = self.routing.a_star_search(start, end)
+            if not path:
+                self.route_text.config(state=tk.NORMAL)
+                self.route_text.delete(1.0, tk.END)
+                self.route_text.insert(tk.END, "No path found between selected locations.")
+                self.route_text.config(state=tk.DISABLED)
+                return
+
+            # Calculate base metrics
+            base_travel_time = self.routing.calculate_route_time(path)
+            distance = base_travel_time * 0.5 # Approximation
+            route_desc = ' -> '.join(path)
+        
+        dish_info = self.cuisine_calculator.get_dish_info(dish)
+        if not dish_info:
+            dish_info = {'base_prep_time': 15, 'cuisine': 'Unknown'} # Default
+            
+        # AI Prediction
+        predicted_time = self.time_predictor.predict(
+            dish_info['cuisine'], 
+            dish_info['base_prep_time'], 
+            distance
+        )
+        
+        # Display results
+        self.route_text.config(state=tk.NORMAL)
+        self.route_text.delete(1.0, tk.END)
+        
+        result = f"""AI DELIVERY PREDICTION
+        
+Dish: {dish} ({dish_info['cuisine']})
+Route: {route_desc}
+
+Time Breakdown:
+------------------
+Base Prep Time:    {dish_info['base_prep_time']} min
+Travel Distance:   {distance:.1f} km
+Traffic Factor:    1.2x (Simulated)
+
+AI Predicted Total Time: {predicted_time:.1f} min
+(vs Standard Estimate: {dish_info['base_prep_time'] + base_travel_time:.1f} min)
+
+Confidence: High (Random Forest Model)
+"""
+        self.route_text.insert(tk.END, result)
+        self.route_text.config(state=tk.DISABLED)
+
+    def smart_assign_delivery(self):
+        """Assign delivery using Smart Assignment Service"""
+        # Get pending deliveries
+        pending = [d for d in self.deliveries.values() if d.status == "Pending"]
+        if not pending:
+            messagebox.showinfo("Info", "No pending deliveries.")
+            return
+            
+        # For demo, just pick first pending
+        delivery = pending[0]
+        
+        # Find best driver
+        best_driver = self.assignment_service.find_best_driver(delivery, self.drivers)
+        
+        if best_driver:
+            best_driver.assign_delivery(delivery.delivery_id)
+            delivery.update_status("Assigned")
+            self.refresh_all_displays()
+            
+            msg = f"🤖 Smart Assigned {delivery.delivery_id} to {best_driver.name}\n"
+            msg += f"Score: High | Rating: {best_driver.rating}⭐ | Load: {len(best_driver.assigned_deliveries)}"
+            messagebox.showinfo("Smart Assignment", msg)
+            self.log_update(f"Smart assigned {delivery.delivery_id} to {best_driver.name}")
+        else:
+            messagebox.showwarning("Warning", "No suitable drivers found.")
+
+    def show_hotspots(self):
+        """Visualize demand hotspots"""
+        self.demand_predictor.generate_synthetic_history(self.graph.nodes)
+        hotspots = self.demand_predictor.predict_hotspots()
+        
+        if len(hotspots) == 0:
+            return
+            
+        # Draw hotspots
+        for x, y in hotspots:
+            # Draw semi-transparent red circle (simulated with stipple)
+            r = 40
+            self.map_canvas.create_oval(x-r, y-r, x+r, y+r, 
+                                      fill="red", outline="", stipple="gray50", tags="hotspot")
+            
+        self.log_update(f"Visualized {len(hotspots)} demand hotspots")
+        
+        # Auto-clear after 5 seconds
+        self.root.after(5000, lambda: self.map_canvas.delete("hotspot"))
+
+    def refresh_all_displays(self):
+        self.draw_graph()
+        self.refresh_drivers_display()
+        self.refresh_deliveries_display()
+        self.update_location_combos()
+
+    def draw_graph(self):
+        self.map_canvas.delete("all")
+        self.draw_coordinate_grid()
+        
+        # Draw edges
+        for node1, edges in self.graph.edges.items():
+            for node2, weight in edges.items():
+                if node1 < node2:
+                    x1, y1 = self.graph.nodes[node1]['x'], self.graph.nodes[node1]['y']
+                    x2, y2 = self.graph.nodes[node2]['x'], self.graph.nodes[node2]['y']
+                    self.map_canvas.create_line(x1, y1, x2, y2, fill="gray", width=2, tags="edge")
+                    
+                    # Draw weight
+                    mx, my = (x1+x2)/2, (y1+y2)/2
+                    self.map_canvas.create_text(mx, my, text=str(weight), fill="blue", font=("Arial", 8))
+        
+        # Draw nodes
+        for node_id, data in self.graph.nodes.items():
+            x, y = data['x'], data['y']
+            self.map_canvas.create_oval(x-15, y-15, x+15, y+15, fill="white", outline="black", width=2, tags="node")
+            self.map_canvas.create_text(x, y, text=node_id, font=("Arial", 8, "bold"), tags="node_label")
+            self.map_canvas.create_text(x, y-25, text=f"({int(x)},{int(y)})", font=("Arial", 7), fill="gray", tags="coordinates")
+
+    def refresh_data(self):
+        self.refresh_all_displays()
+        self.log_update("Data refreshed")
+
+    def clear_log(self):
+        self.updates_text.delete(1.0, tk.END)
+
+    def toggle_tracking(self):
+        if self.tracking_active.get():
+            self.start_live_tracking()
+        else:
+            self.stop_live_tracking()
+
+    def start_live_tracking(self):
+        self.log_update("Live tracking started")
+        
+    def stop_live_tracking(self):
+        self.log_update("Live tracking stopped")
+
+    def open_image_map_creator(self):
+        """Open the image map creator tool"""
+        create_image_map(self)
+
+    def open_real_time_map(self):
+        """Open the real-time map tool"""
+        create_real_time_map(self)
+
+    def show_real_scale_view(self):
+        messagebox.showinfo("Info", "Real scale view not implemented")
 
 def main():
     root = tk.Tk()
     app = DeliveryTrackerGUI(root)
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
