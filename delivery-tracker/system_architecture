@@ -1,0 +1,41 @@
+// Delivery Tracker System Architecture
+digraph {
+	dpi=300
+	rankdir=TB
+	size="8,8"
+	ratio=1
+	splines=spline
+	nodesep=0.5
+	ranksep=0.5
+	fontname=Helvetica
+	node [fontname=Helvetica fontsize=10 penwidth=1.5 shape=note style="filled, rounded"]
+	edge [color="#455A64" fontname=Helvetica fontsize=9 penwidth=1.2]
+	GUI [label="GUI / Presentation
+(Tkinter)" color="#1565C0" fillcolor="#E3F2FD"]
+	subgraph cluster_logic {
+		fontcolor="#6A1B9A" label="Core Logic" style=dashed
+		Assignment [label="Assignment Service" color="#6A1B9A" fillcolor="#F3E5F5"]
+		Routing [label="Routing Engine
+(A* / Dijkstra)" color="#6A1B9A" fillcolor="#F3E5F5"]
+	}
+	subgraph cluster_ml {
+		fontcolor="#2E7D32" label="AI / ML Module" style=dashed
+		ML [label="Predictors
+(Time & Demand)" color="#2E7D32" fillcolor="#E8F5E9"]
+	}
+	subgraph cluster_data {
+		fontcolor="#EF6C00" label="Data Layer" style=dashed
+		"Graph" [label="Graph Network" color="#EF6C00" fillcolor="#FFF3E0"]
+		Entities [label="Entities
+(Drivers/Orders)" color="#EF6C00" fillcolor="#FFF3E0"]
+	}
+	Ext [label="External Services
+(OSM / Maps)" color="#455A64" fillcolor="#ECEFF1" shape=component]
+	GUI -> Assignment
+	GUI -> Routing
+	GUI -> ML
+	Assignment -> Entities
+	Routing -> "Graph"
+	ML -> "Graph" [label=features style=dashed]
+	GUI -> Ext [style=dotted]
+}
